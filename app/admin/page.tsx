@@ -12,7 +12,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Link as LinkIcon,
+  Home,
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import BookingsTab from "@/components/admin/BookingsTab";
 import PaymentsTab from "@/components/admin/PaymentsTab";
@@ -81,6 +83,13 @@ function AdminContent() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-muted hover:text-primary transition-colors px-3 py-2 border border-sky-deep rounded-sm"
+            >
+              <Home size={14} />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
             <a
               href="/api/auth/square"
               className="flex items-center gap-1.5 text-xs font-bold text-slate-muted hover:text-primary transition-colors px-3 py-2 border border-sky-deep rounded-sm"
