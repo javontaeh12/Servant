@@ -30,7 +30,7 @@ function formatDateTime(isoString: string) {
   });
 }
 
-export default function BookingsTab({ password }: { password: string }) {
+export default function BookingsTab() {
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +39,7 @@ export default function BookingsTab({ password }: { password: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/calendar/bookings", {
-        headers: { "x-admin-password": password },
-      });
+      const res = await fetch("/api/calendar/bookings");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setBookings(data);

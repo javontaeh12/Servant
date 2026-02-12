@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listUpcomingBookings } from "@/lib/google-calendar";
+import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
   try {
-    const password = request.headers.get("x-admin-password");
-    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

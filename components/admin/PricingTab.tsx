@@ -17,7 +17,7 @@ const inputClass =
 const labelClass =
   "block text-slate-muted text-xs font-bold tracking-wide uppercase mb-2";
 
-export default function PricingTab({ password }: { password: string }) {
+export default function PricingTab() {
   const [config, setConfig] = useState<PricingConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,10 +40,7 @@ export default function PricingTab({ password }: { password: string }) {
     try {
       const res = await fetch("/api/pricing", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": password,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
       });
       if (res.ok) {

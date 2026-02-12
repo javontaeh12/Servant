@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 
 export default function HeroSection() {
@@ -22,20 +21,6 @@ export default function HeroSection() {
           excellence. From intimate dinners to grand celebrations.
         </p>
 
-        <div className="animate-fade-up-delay-5 flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link
-            href="/quote"
-            className="bg-primary hover:bg-primary-dark text-white font-heading font-bold text-sm tracking-[0.15em] uppercase px-10 py-4 rounded-sm transition-all duration-300"
-          >
-            Request a Quote
-          </Link>
-          <Link
-            href="/services"
-            className="border border-primary/30 hover:border-primary text-primary font-heading font-bold text-sm tracking-[0.15em] uppercase px-10 py-4 rounded-sm transition-all duration-300"
-          >
-            Our Services
-          </Link>
-        </div>
       </div>
 
     </section>

@@ -22,7 +22,7 @@ const labelClass =
 
 type SectionKey = "categories" | "items" | "presets";
 
-export default function MenuTab({ password }: { password: string }) {
+export default function MenuTab() {
   const [config, setConfig] = useState<MenuConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,7 +30,7 @@ export default function MenuTab({ password }: { password: string }) {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>(
-    { categories: true, items: false, presets: false }
+    { categories: false, items: false, presets: false }
   );
   const [openItemCategories, setOpenItemCategories] = useState<
     Record<string, boolean>
@@ -41,13 +41,7 @@ export default function MenuTab({ password }: { password: string }) {
       .then((res) => res.json())
       .then((data: MenuConfig) => {
         setConfig(data);
-        // Auto-open first category in Items section
-        const sorted = [...data.categories].sort(
-          (a, b) => a.sortOrder - b.sortOrder
-        );
-        if (sorted.length > 0) {
-          setOpenItemCategories({ [sorted[0].id]: true });
-        }
+        // All item categories start collapsed
       })
       .catch(() => setSaveError("Failed to load menu"))
       .finally(() => setLoading(false));
@@ -69,10 +63,7 @@ export default function MenuTab({ password }: { password: string }) {
     try {
       const res = await fetch("/api/menu", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": password,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
       });
       if (res.ok) {

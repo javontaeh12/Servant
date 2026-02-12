@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readMenu, writeMenu } from "@/lib/menu-storage";
 import { MenuConfig } from "@/lib/types";
+import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET() {
   try {
@@ -17,8 +18,8 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const password = request.headers.get("x-admin-password");
-    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

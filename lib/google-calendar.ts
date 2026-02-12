@@ -1,17 +1,19 @@
 import { google } from "googleapis";
 import { TimeSlot, PricingConfig, QuoteEstimate, CalendarBooking } from "./types";
 import { formatCurrency } from "./pricing";
+import { getGoogleRefreshToken } from "./credentials";
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET
-);
+async function getCalendarClient() {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
 
-oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-});
+  const refreshToken = await getGoogleRefreshToken();
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
 
-const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+  return google.calendar({ version: "v3", auth: oauth2Client });
+}
 
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || "primary";
 const TIMEZONE = process.env.BUSINESS_TIMEZONE || "America/Chicago";
@@ -30,6 +32,7 @@ export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
   if (dayEnd < now) return [];
 
   try {
+    const calendar = await getCalendarClient();
     const response = await calendar.freebusy.query({
       requestBody: {
         timeMin: dayStart.toISOString(),
@@ -80,6 +83,7 @@ export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
 
 export async function listUpcomingBookings(): Promise<CalendarBooking[]> {
   try {
+    const calendar = await getCalendarClient();
     const now = new Date();
     const response = await calendar.events.list({
       calendarId: CALENDAR_ID,
@@ -156,6 +160,7 @@ export async function createBookingEvent(data: {
           .filter(Boolean)
       : [];
 
+  const calendar = await getCalendarClient();
   const event = await calendar.events.insert({
     calendarId: CALENDAR_ID,
     requestBody: {

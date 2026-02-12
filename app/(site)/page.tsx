@@ -9,9 +9,9 @@ export default function Home() {
   return (
     <>
       <HeroSection />
+      <PopularMenus />
       <ServicesPreview />
       <ServiceArea />
-      <PopularMenus />
       <TestimonialSection />
       <CTABanner />
     </>

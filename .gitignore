@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# credentials (runtime OAuth tokens)
+/data/credentials.json
+
 # vercel
 .vercel
 

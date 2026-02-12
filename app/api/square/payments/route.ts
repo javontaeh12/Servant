@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { squareClient, SQUARE_LOCATION_ID } from "@/lib/square";
+import { getSquareClient, SQUARE_LOCATION_ID } from "@/lib/square";
 import { SquarePayment } from "@/lib/types";
+import { getSessionFromRequest } from "@/lib/session";
 import crypto from "crypto";
 
 export async function GET(request: NextRequest) {
   try {
-    const password = request.headers.get("x-admin-password");
-    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const squareClient = await getSquareClient();
     const page = await squareClient.payments.list({
       locationId: SQUARE_LOCATION_ID,
       sortOrder: "DESC",
@@ -37,8 +39,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const password = request.headers.get("x-admin-password");
-    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -51,6 +53,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const squareClient = await getSquareClient();
     const result = await squareClient.payments.create({
       sourceId,
       idempotencyKey: crypto.randomUUID(),

@@ -50,7 +50,7 @@ function statusColor(status: string) {
   }
 }
 
-export default function PaymentsTab({ password }: { password: string }) {
+export default function PaymentsTab() {
   const [payments, setPayments] = useState<SquarePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,9 +71,7 @@ export default function PaymentsTab({ password }: { password: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/square/payments", {
-        headers: { "x-admin-password": password },
-      });
+      const res = await fetch("/api/square/payments");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setPayments(data);
@@ -161,7 +159,6 @@ export default function PaymentsTab({ password }: { password: string }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-password": password,
         },
         body: JSON.stringify({
           sourceId: result.token,
