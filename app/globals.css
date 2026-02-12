@@ -1,26 +1,89 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary: #2B7CB9;
+  --primary-light: #5BA3D9;
+  --primary-dark: #1A5C8E;
+  --navy: #0F2A44;
+  --navy-light: #163552;
+  --sky: #EBF4FA;
+  --sky-deep: #D6E8F5;
+  --cream: #FAF7F0;
+  --slate-text: #1E293B;
+  --slate-muted: #64748B;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-navy: var(--navy);
+  --color-navy-light: var(--navy-light);
+  --color-sky: var(--sky);
+  --color-sky-deep: var(--sky-deep);
+  --color-cream: var(--cream);
+  --color-slate-text: var(--slate-text);
+  --color-slate-muted: var(--slate-muted);
+  --font-heading: var(--font-playfair);
+  --font-body: var(--font-lato);
+  --animate-fade-in: fade-in 0.8s ease both;
+  --animate-fade-in-delay-1: fade-in 0.8s ease 0.15s both;
+  --animate-fade-in-delay-2: fade-in 0.8s ease 0.3s both;
+  --animate-fade-in-delay-3: fade-in 0.8s ease 0.45s both;
+  --animate-fade-in-delay-4: fade-in 0.8s ease 0.6s both;
+  --animate-fade-in-delay-5: fade-in 0.8s ease 0.8s both;
+  --animate-fade-in-delay-6: fade-in 0.8s ease 1s both;
+  --animate-fade-up: fade-up 0.8s ease both;
+  --animate-fade-up-delay-1: fade-up 0.8s ease 0.15s both;
+  --animate-fade-up-delay-2: fade-up 0.8s ease 0.3s both;
+  --animate-fade-up-delay-3: fade-up 0.8s ease 0.45s both;
+  --animate-fade-up-delay-4: fade-up 0.8s ease 0.6s both;
+  --animate-fade-up-delay-5: fade-up 0.8s ease 0.8s both;
+  --animate-line-grow: line-grow 1s ease 0.4s both;
+  --animate-bounce-slow: bounce-slow 2s ease-in-out infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes line-grow {
+  from { width: 0; }
+  to { width: 60px; }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: var(--slate-text);
+  font-family: var(--font-body), system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+input, select, textarea { font-size: 16px; }
+
+::selection {
+  background: var(--primary);
+  color: white;
 }

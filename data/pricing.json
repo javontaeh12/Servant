@@ -1,0 +1,43 @@
+{
+  "eventTypes": {
+    "Wedding Reception": 500,
+    "Corporate Event": 400,
+    "Private Dinner Party": 300,
+    "Holiday Event": 350,
+    "Church / Community Event": 250,
+    "Funeral Repast": 200,
+    "Other": 200
+  },
+  "serviceStyles": {
+    "Full Catering (Buffet)": 0,
+    "Plated Dinner Service": 150,
+    "Appetizers & Hors d'oeuvres": -100,
+    "Family-Style Service": 50,
+    "Dessert Bar": -150,
+    "Custom Package": 0
+  },
+  "perPersonRate": 35,
+  "addOns": [
+    {
+      "id": "drinks",
+      "name": "Beverage Service",
+      "description": "Non-alcoholic drinks including sweet tea, lemonade, water, and coffee",
+      "pricingType": "per-person",
+      "price": 8
+    },
+    {
+      "id": "silverware",
+      "name": "Premium Silverware & China",
+      "description": "Upgraded place settings with real silverware, china plates, and cloth napkins",
+      "pricingType": "flat",
+      "price": 150
+    },
+    {
+      "id": "togo",
+      "name": "To-Go Plates",
+      "description": "Individual to-go containers for guests to take home leftovers",
+      "pricingType": "per-person",
+      "price": 3
+    }
+  ]
+}
