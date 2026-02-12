@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { TimeSlot, PricingConfig, QuoteEstimate } from "./types";
+import { TimeSlot, PricingConfig, QuoteEstimate, CalendarBooking } from "./types";
 import { formatCurrency } from "./pricing";
 
 const oauth2Client = new google.auth.OAuth2(
@@ -74,6 +74,33 @@ export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
     return allSlots;
   } catch (error) {
     console.error("Error fetching available slots:", error);
+    return [];
+  }
+}
+
+export async function listUpcomingBookings(): Promise<CalendarBooking[]> {
+  try {
+    const now = new Date();
+    const response = await calendar.events.list({
+      calendarId: CALENDAR_ID,
+      timeMin: now.toISOString(),
+      maxResults: 50,
+      singleEvents: true,
+      orderBy: "startTime",
+    });
+
+    const events = response.data.items || [];
+    return events.map((event) => ({
+      id: event.id || "",
+      summary: event.summary || "Untitled",
+      description: event.description || "",
+      start: event.start?.dateTime || event.start?.date || "",
+      end: event.end?.dateTime || event.end?.date || "",
+      status: event.status || "confirmed",
+      created: event.created || "",
+    }));
+  } catch (error) {
+    console.error("Error listing bookings:", error);
     return [];
   }
 }

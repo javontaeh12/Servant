@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { BUSINESS, NAV_LINKS } from "@/lib/constants";
 
@@ -12,15 +11,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16">
           {/* Brand */}
           <div>
-            <div className="inline-block bg-white rounded-lg px-4 py-3 mb-4">
-              <Image
-                src="/logo.png"
-                alt="I'm A Servant First LLC"
-                width={180}
-                height={60}
-                className="h-10 w-auto"
-              />
-            </div>
+            <h3 className="font-heading font-bold text-xl text-white tracking-wide mb-4">
+              I&apos;m A Servant First LLC
+            </h3>
             <p className="text-white/50 text-sm leading-relaxed">
               {BUSINESS.tagline}. Premium southern catering in{" "}
               {BUSINESS.address}.
@@ -42,6 +35,12 @@ export default function Footer() {
                   {link.label}
                 </Link>
               ))}
+              <Link
+                href="/admin"
+                className="text-white/50 hover:text-primary-light transition-colors text-sm"
+              >
+                Admin
+              </Link>
             </div>
           </div>
 

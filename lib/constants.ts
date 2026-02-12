@@ -5,7 +5,7 @@ export const BUSINESS = {
   tagline: "Upscale Southern Catering, Crafted with Heart",
   phone: "(555) 123-4567",
   email: "info@imaservantfirst.com",
-  address: "Houston, TX",
+  address: "North Carolina",
   hours: {
     weekdays: "Mon - Fri: 9:00 AM - 7:00 PM",
     weekends: "Sat - Sun: 10:00 AM - 5:00 PM",

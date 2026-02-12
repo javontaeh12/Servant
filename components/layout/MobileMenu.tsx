@@ -1,83 +1,84 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { Home, UtensilsCrossed, FileText, Phone, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_LINKS } from "@/lib/constants";
 
-interface MobileMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+const BOTTOM_NAV_ITEMS = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Services", href: "/services", icon: UtensilsCrossed },
+  { label: "Quote", href: "/quote", icon: FileText },
+  { label: "Contact", href: "/contact", icon: Phone },
+  { label: "Gallery", href: "/gallery", icon: ImageIcon },
+];
 
-export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
+export default function MobileMenu() {
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
   return (
-    <div
-      className={cn(
-        "fixed inset-0 z-[60] bg-white flex flex-col transition-transform duration-300 ease-in-out",
-        isOpen ? "translate-x-0" : "translate-x-full"
-      )}
-    >
-      {/* Close button */}
-      <div className="flex justify-between items-center p-5">
-        <Image src="/logo.png" alt="Logo" width={140} height={46} className="h-10 w-auto" />
-        <button
-          onClick={onClose}
-          className="text-primary p-2"
-          aria-label="Close menu"
-        >
-          <X size={32} />
-        </button>
-      </div>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 md:hidden">
+      <div className="flex items-end justify-around px-4 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {BOTTOM_NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.href;
+          const isQuote = item.label === "Quote";
+          const Icon = item.icon;
 
-      {/* Nav links */}
-      <div className="flex flex-col items-center justify-center flex-1 gap-8">
-        {NAV_LINKS.map((link) => (
-          <div key={link.href}>
+          if (isQuote) {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex flex-col items-center -mt-6 relative"
+              >
+                <div
+                  className={cn(
+                    "w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white transition-all duration-300",
+                    isActive
+                      ? "bg-primary-dark"
+                      : "bg-primary"
+                  )}
+                >
+                  <Icon size={24} className="text-white" strokeWidth={2} />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold mt-0.5 uppercase tracking-wider transition-colors duration-200",
+                    isActive ? "text-primary" : "text-slate-muted"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          }
+
+          return (
             <Link
-              href={link.href}
-              onClick={onClose}
-              className={cn(
-                "text-2xl font-heading font-bold tracking-wider uppercase transition-colors duration-200",
-                pathname === link.href
-                  ? "text-primary"
-                  : "text-navy hover:text-primary"
-              )}
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center justify-center pt-2 pb-1 min-w-[3.5rem]"
             >
-              {link.label}
+              <Icon
+                size={22}
+                strokeWidth={isActive ? 2.2 : 1.5}
+                className={cn(
+                  "transition-colors duration-200",
+                  isActive ? "text-primary" : "text-slate-muted"
+                )}
+              />
+              <span
+                className={cn(
+                  "text-[10px] font-bold mt-1 uppercase tracking-wider transition-colors duration-200",
+                  isActive ? "text-primary" : "text-slate-muted"
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
-          </div>
-        ))}
-
-        <div className="mt-4">
-          <Link
-            href="/quote"
-            onClick={onClose}
-            className="border-2 border-primary text-primary px-8 py-3 text-lg font-heading font-bold tracking-wider uppercase hover:bg-primary hover:text-white transition-all duration-300"
-          >
-            Get a Quote
-          </Link>
-        </div>
+          );
+        })}
       </div>
-
-      {/* Bottom accent */}
-      <div className="h-1 bg-gradient-to-r from-primary-light via-primary to-primary-light" />
-    </div>
+    </nav>
   );
 }

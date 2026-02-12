@@ -62,5 +62,65 @@ export interface QuoteEstimate {
   perPersonTotal: number;
   addOnBreakdown: { name: string; amount: number }[];
   addOnsTotal: number;
+  mealSelectionPrice: number;
   total: number;
+}
+
+// Menu system
+export interface MenuCategory {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  categoryId: string;
+  pricePerPerson: number;
+  isAvailable: boolean;
+}
+
+export interface PresetMeal {
+  id: string;
+  name: string;
+  description: string;
+  itemIds: string[];
+  pricePerPerson: number;
+  isAvailable: boolean;
+}
+
+export interface MenuConfig {
+  categories: MenuCategory[];
+  items: MenuItem[];
+  presetMeals: PresetMeal[];
+}
+
+export interface MealSelection {
+  type: "preset" | "custom";
+  presetMealId?: string;
+  selectedItemIds?: string[];
+}
+
+// Calendar
+export interface CalendarBooking {
+  id: string;
+  summary: string;
+  description: string;
+  start: string;
+  end: string;
+  status: string;
+  created: string;
+}
+
+// Square
+export interface SquarePayment {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  description: string;
+  receiptUrl: string;
+  createdAt: string;
 }

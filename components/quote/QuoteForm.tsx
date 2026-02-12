@@ -16,13 +16,20 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPES, SERVICE_STYLES } from "@/lib/constants";
-import { PricingConfig, QuoteEstimate, AddOn } from "@/lib/types";
+import {
+  PricingConfig,
+  QuoteEstimate,
+  AddOn,
+  MenuConfig,
+  MealSelection,
+} from "@/lib/types";
 import { calculateEstimate, formatCurrency } from "@/lib/pricing";
 
 interface FormData {
   eventType: string;
   serviceType: string;
   guestCount: string;
+  mealSelection: MealSelection | null;
   selectedAddOns: string[];
   eventDate: string;
   eventTime: string;
@@ -37,6 +44,7 @@ const initialForm: FormData = {
   eventType: "",
   serviceType: "",
   guestCount: "",
+  mealSelection: null,
   selectedAddOns: [],
   eventDate: "",
   eventTime: "",
@@ -54,8 +62,10 @@ const labelClass =
 const selectClass =
   "w-full bg-sky/50 border border-sky-deep text-slate-text px-4 py-3.5 focus:border-primary/50 focus:outline-none transition-colors text-sm appearance-none rounded-sm";
 
+const TOTAL_STEPS = 6;
 const STEP_LABELS = [
   "Event Details",
+  "Choose Your Meal",
   "Add-Ons",
   "Choose Date & Time",
   "Your Information",
@@ -70,12 +80,17 @@ export default function QuoteForm() {
   const [error, setError] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [pricing, setPricing] = useState<PricingConfig | null>(null);
+  const [menuConfig, setMenuConfig] = useState<MenuConfig | null>(null);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/pricing")
       .then((res) => res.json())
       .then((data) => setPricing(data))
+      .catch(() => {});
+    fetch("/api/menu")
+      .then((res) => res.json())
+      .then((data) => setMenuConfig(data))
       .catch(() => {});
   }, []);
 
@@ -86,7 +101,9 @@ export default function QuoteForm() {
           form.eventType,
           form.serviceType,
           parseInt(form.guestCount) || 0,
-          form.selectedAddOns
+          form.selectedAddOns,
+          form.mealSelection || undefined,
+          menuConfig || undefined
         )
       : null;
 
@@ -145,10 +162,12 @@ export default function QuoteForm() {
       case 1:
         return form.eventType && form.serviceType && form.guestCount;
       case 2:
-        return true; // add-ons are optional
+        return true; // meal selection is optional
       case 3:
-        return form.eventDate && form.eventTime;
+        return true; // add-ons are optional
       case 4:
+        return form.eventDate && form.eventTime;
+      case 5:
         return form.name && form.email && form.phone;
       default:
         return true;
@@ -158,6 +177,61 @@ export default function QuoteForm() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split("T")[0];
+
+  // Meal selection helpers
+  const setMealMode = (mode: "preset" | "custom" | null) => {
+    if (mode === null) {
+      setForm((prev) => ({ ...prev, mealSelection: null }));
+    } else if (mode === "preset") {
+      setForm((prev) => ({
+        ...prev,
+        mealSelection: { type: "preset", presetMealId: undefined },
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        mealSelection: { type: "custom", selectedItemIds: [] },
+      }));
+    }
+  };
+
+  const selectPreset = (presetId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      mealSelection: { type: "preset", presetMealId: presetId },
+    }));
+  };
+
+  const toggleMenuItem = (itemId: string) => {
+    setForm((prev) => {
+      const current = prev.mealSelection?.selectedItemIds || [];
+      const updated = current.includes(itemId)
+        ? current.filter((id) => id !== itemId)
+        : [...current, itemId];
+      return {
+        ...prev,
+        mealSelection: { type: "custom", selectedItemIds: updated },
+      };
+    });
+  };
+
+  // Get meal selection summary
+  const getMealSummary = () => {
+    if (!form.mealSelection || !menuConfig) return null;
+    if (form.mealSelection.type === "preset" && form.mealSelection.presetMealId) {
+      const preset = menuConfig.presetMeals.find(
+        (p) => p.id === form.mealSelection!.presetMealId
+      );
+      return preset ? `${preset.name} (${formatCurrency(preset.pricePerPerson)}/person)` : null;
+    }
+    if (form.mealSelection.type === "custom" && form.mealSelection.selectedItemIds?.length) {
+      const items = form.mealSelection.selectedItemIds
+        .map((id) => menuConfig.items.find((i) => i.id === id))
+        .filter(Boolean);
+      return `${items.length} custom items selected`;
+    }
+    return null;
+  };
 
   if (success) {
     return (
@@ -187,6 +261,9 @@ export default function QuoteForm() {
             <p className="text-slate-text">
               {form.guestCount} guests &middot; {form.serviceType}
             </p>
+            {getMealSummary() && (
+              <p className="text-slate-text">{getMealSummary()}</p>
+            )}
           </div>
           {estimate && (
             <div className="border-t border-sky-deep mt-4 pt-4">
@@ -210,7 +287,7 @@ export default function QuoteForm() {
     <div className="max-w-xl mx-auto pb-28">
       {/* Step indicators */}
       <div className="flex items-center justify-center gap-0 mb-12">
-        {[1, 2, 3, 4, 5].map((s) => (
+        {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
           <div key={s} className="flex items-center">
             <div
               className={cn(
@@ -224,10 +301,10 @@ export default function QuoteForm() {
             >
               {s < step ? <Check size={14} /> : s}
             </div>
-            {s < 5 && (
+            {s < TOTAL_STEPS && (
               <div
                 className={cn(
-                  "w-6 md:w-12 h-[1px] transition-all",
+                  "w-4 md:w-8 h-[1px] transition-all",
                   s < step ? "bg-primary/30" : "bg-sky-deep"
                 )}
               />
@@ -239,7 +316,7 @@ export default function QuoteForm() {
       {/* Step label */}
       <div className="text-center mb-10">
         <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-1">
-          Step {step} of 5
+          Step {step} of {TOTAL_STEPS}
         </p>
         <h3 className="font-heading text-xl text-slate-text">
           {STEP_LABELS[step - 1]}
@@ -322,8 +399,206 @@ export default function QuoteForm() {
           </div>
         )}
 
-        {/* Step 2: Add-Ons */}
-        {step === 2 && pricing && (
+        {/* Step 2: Choose Your Meal */}
+        {step === 2 && menuConfig && (
+          <div className="space-y-6">
+            <p className="text-slate-muted text-sm text-center mb-2">
+              Select a specialty meal or build your own. This step is optional.
+            </p>
+
+            {/* Mode selector */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setMealMode(
+                    form.mealSelection?.type === "preset" ? null : "preset"
+                  )
+                }
+                className={cn(
+                  "flex-1 p-4 border rounded-sm text-center transition-all text-sm font-bold",
+                  form.mealSelection?.type === "preset"
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
+                )}
+              >
+                Specialty Meal
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setMealMode(
+                    form.mealSelection?.type === "custom" ? null : "custom"
+                  )
+                }
+                className={cn(
+                  "flex-1 p-4 border rounded-sm text-center transition-all text-sm font-bold",
+                  form.mealSelection?.type === "custom"
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
+                )}
+              >
+                Build Your Own
+              </button>
+            </div>
+
+            {/* Preset meals */}
+            {form.mealSelection?.type === "preset" && (
+              <div className="space-y-3">
+                {menuConfig.presetMeals
+                  .filter((p) => p.isAvailable)
+                  .map((preset) => {
+                    const selected =
+                      form.mealSelection?.presetMealId === preset.id;
+                    const items = preset.itemIds
+                      .map((id) => menuConfig.items.find((i) => i.id === id))
+                      .filter(Boolean);
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => selectPreset(preset.id)}
+                        className={cn(
+                          "w-full text-left p-5 border rounded-sm transition-all",
+                          selected
+                            ? "border-primary bg-primary/5"
+                            : "border-sky-deep bg-sky/50 hover:border-primary/30"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div
+                                className={cn(
+                                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                                  selected
+                                    ? "bg-primary border-primary"
+                                    : "border-sky-deep"
+                                )}
+                              >
+                                {selected && (
+                                  <Check size={12} className="text-white" />
+                                )}
+                              </div>
+                              <span className="text-sm font-bold text-slate-text">
+                                {preset.name}
+                              </span>
+                            </div>
+                            <p className="text-slate-muted text-xs ml-7 mb-2">
+                              {preset.description}
+                            </p>
+                            {items.length > 0 && (
+                              <p className="text-slate-muted/60 text-xs ml-7">
+                                Includes: {items.map((i) => i!.name).join(", ")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-bold text-primary">
+                              {formatCurrency(preset.pricePerPerson)}/person
+                            </p>
+                            {parseInt(form.guestCount) > 0 && (
+                              <p className="text-xs text-slate-muted/60">
+                                {formatCurrency(
+                                  preset.pricePerPerson *
+                                    parseInt(form.guestCount)
+                                )}{" "}
+                                total
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Build your own */}
+            {form.mealSelection?.type === "custom" && (
+              <div className="space-y-6">
+                {menuConfig.categories
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((cat) => {
+                    const items = menuConfig.items.filter(
+                      (i) => i.categoryId === cat.id && i.isAvailable
+                    );
+                    if (items.length === 0) return null;
+                    return (
+                      <div key={cat.id}>
+                        <p className="text-slate-text text-sm font-bold mb-3">
+                          {cat.name}
+                        </p>
+                        <div className="space-y-2">
+                          {items.map((item) => {
+                            const selected =
+                              form.mealSelection?.selectedItemIds?.includes(
+                                item.id
+                              ) || false;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => toggleMenuItem(item.id)}
+                                className={cn(
+                                  "w-full text-left p-4 border rounded-sm transition-all",
+                                  selected
+                                    ? "border-primary bg-primary/5"
+                                    : "border-sky-deep bg-sky/50 hover:border-primary/30"
+                                )}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <div
+                                      className={cn(
+                                        "w-5 h-5 rounded-sm border-2 flex items-center justify-center transition-all shrink-0",
+                                        selected
+                                          ? "bg-primary border-primary"
+                                          : "border-sky-deep"
+                                      )}
+                                    >
+                                      {selected && (
+                                        <Check
+                                          size={12}
+                                          className="text-white"
+                                        />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <span className="text-sm font-bold text-slate-text">
+                                        {item.name}
+                                      </span>
+                                      <p className="text-slate-muted text-xs">
+                                        {item.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <span className="text-sm font-bold text-primary shrink-0">
+                                    {formatCurrency(item.pricePerPerson)}
+                                    /person
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {!form.mealSelection && (
+              <p className="text-center text-slate-muted/50 text-xs">
+                You can skip this step if you&apos;d prefer to discuss menu
+                options during your consultation.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Add-Ons */}
+        {step === 3 && pricing && (
           <div className="space-y-4">
             <p className="text-slate-muted text-sm text-center mb-6">
               Enhance your event with these optional extras.
@@ -389,8 +664,8 @@ export default function QuoteForm() {
           </div>
         )}
 
-        {/* Step 3: Date & Time */}
-        {step === 3 && (
+        {/* Step 4: Date & Time */}
+        {step === 4 && (
           <div className="space-y-6">
             <div>
               <label className={labelClass}>
@@ -420,8 +695,8 @@ export default function QuoteForm() {
           </div>
         )}
 
-        {/* Step 4: Your Information */}
-        {step === 4 && (
+        {/* Step 5: Your Information */}
+        {step === 5 && (
           <div className="space-y-6">
             <div>
               <label className={labelClass}>Full Name *</label>
@@ -476,8 +751,8 @@ export default function QuoteForm() {
           </div>
         )}
 
-        {/* Step 5: Review & Submit */}
-        {step === 5 && (
+        {/* Step 6: Review & Submit */}
+        {step === 6 && (
           <div className="space-y-6">
             <div className="bg-sky border border-sky-deep p-6 rounded-sm">
               <p className="text-primary text-xs font-bold tracking-wide uppercase mb-5">
@@ -501,6 +776,34 @@ export default function QuoteForm() {
                   <p className="text-slate-text">{form.eventDate}</p>
                 </div>
               </div>
+              {getMealSummary() && (
+                <div className="border-t border-sky-deep mt-5 pt-5 text-sm">
+                  <p className="text-slate-muted text-xs mb-2">
+                    Meal Selection
+                  </p>
+                  <p className="text-slate-text">{getMealSummary()}</p>
+                  {form.mealSelection?.type === "custom" &&
+                    form.mealSelection.selectedItemIds &&
+                    menuConfig && (
+                      <div className="mt-2 space-y-1">
+                        {form.mealSelection.selectedItemIds.map((id) => {
+                          const item = menuConfig.items.find(
+                            (i) => i.id === id
+                          );
+                          return item ? (
+                            <p
+                              key={id}
+                              className="text-slate-muted text-xs ml-2"
+                            >
+                              &bull; {item.name} (
+                              {formatCurrency(item.pricePerPerson)}/person)
+                            </p>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                </div>
+              )}
               {form.selectedAddOns.length > 0 && pricing && (
                 <div className="border-t border-sky-deep mt-5 pt-5 text-sm">
                   <p className="text-slate-muted text-xs mb-2">Add-Ons</p>
@@ -588,6 +891,14 @@ export default function QuoteForm() {
                       {formatCurrency(estimate.perPersonTotal)}
                     </span>
                   </div>
+                  {estimate.mealSelectionPrice > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-muted">Meal Selection</span>
+                      <span className="text-slate-text">
+                        {formatCurrency(estimate.mealSelectionPrice)}
+                      </span>
+                    </div>
+                  )}
                   {estimate.addOnBreakdown.map((item) => (
                     <div key={item.name} className="flex justify-between">
                       <span className="text-slate-muted">{item.name}</span>
@@ -636,7 +947,7 @@ export default function QuoteForm() {
           <div />
         )}
 
-        {step < 5 ? (
+        {step < TOTAL_STEPS ? (
           <button
             onClick={() => goToStep(step + 1)}
             disabled={!canProceed()}
@@ -721,6 +1032,14 @@ export default function QuoteForm() {
                     {formatCurrency(estimate.perPersonTotal)}
                   </span>
                 </div>
+                {estimate.mealSelectionPrice > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-muted">Meal Selection</span>
+                    <span className="text-slate-text">
+                      {formatCurrency(estimate.mealSelectionPrice)}
+                    </span>
+                  </div>
+                )}
                 {estimate.addOnBreakdown.map((item) => (
                   <div key={item.name} className="flex justify-between">
                     <span className="text-slate-muted">{item.name}</span>

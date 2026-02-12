@@ -1,0 +1,117 @@
+{
+  "categories": [
+    { "id": "appetizers", "name": "Appetizers", "sortOrder": 1 },
+    { "id": "entrees", "name": "Entrées", "sortOrder": 2 },
+    { "id": "sides", "name": "Sides", "sortOrder": 3 },
+    { "id": "desserts", "name": "Desserts", "sortOrder": 4 },
+    { "id": "beverages", "name": "Beverages", "sortOrder": 5 }
+  ],
+  "items": [
+    {
+      "id": "item_1",
+      "name": "Southern Deviled Eggs",
+      "description": "Classic deviled eggs with a hint of paprika and relish",
+      "categoryId": "appetizers",
+      "pricePerPerson": 3,
+      "isAvailable": true
+    },
+    {
+      "id": "item_2",
+      "name": "Fried Green Tomatoes",
+      "description": "Crispy cornmeal-crusted green tomatoes with remoulade",
+      "categoryId": "appetizers",
+      "pricePerPerson": 4,
+      "isAvailable": true
+    },
+    {
+      "id": "item_3",
+      "name": "Herb-Roasted Chicken",
+      "description": "Tender roasted chicken with fresh herbs and pan gravy",
+      "categoryId": "entrees",
+      "pricePerPerson": 12,
+      "isAvailable": true
+    },
+    {
+      "id": "item_4",
+      "name": "Braised Short Ribs",
+      "description": "Slow-braised beef short ribs in a rich red wine reduction",
+      "categoryId": "entrees",
+      "pricePerPerson": 18,
+      "isAvailable": true
+    },
+    {
+      "id": "item_5",
+      "name": "Honey-Glazed Salmon",
+      "description": "Atlantic salmon with a sweet honey glaze and lemon butter",
+      "categoryId": "entrees",
+      "pricePerPerson": 16,
+      "isAvailable": true
+    },
+    {
+      "id": "item_6",
+      "name": "Southern Collard Greens",
+      "description": "Slow-cooked collard greens with smoked turkey",
+      "categoryId": "sides",
+      "pricePerPerson": 4,
+      "isAvailable": true
+    },
+    {
+      "id": "item_7",
+      "name": "Mac & Cheese",
+      "description": "Creamy baked macaroni with a three-cheese blend",
+      "categoryId": "sides",
+      "pricePerPerson": 5,
+      "isAvailable": true
+    },
+    {
+      "id": "item_8",
+      "name": "Candied Yams",
+      "description": "Sweet potatoes baked with brown sugar and cinnamon",
+      "categoryId": "sides",
+      "pricePerPerson": 4,
+      "isAvailable": true
+    },
+    {
+      "id": "item_9",
+      "name": "Peach Cobbler",
+      "description": "Warm peach cobbler with a buttery biscuit crust",
+      "categoryId": "desserts",
+      "pricePerPerson": 6,
+      "isAvailable": true
+    },
+    {
+      "id": "item_10",
+      "name": "Red Velvet Cake",
+      "description": "Classic southern red velvet with cream cheese frosting",
+      "categoryId": "desserts",
+      "pricePerPerson": 7,
+      "isAvailable": true
+    },
+    {
+      "id": "item_11",
+      "name": "Sweet Tea",
+      "description": "Traditional southern sweet tea, freshly brewed",
+      "categoryId": "beverages",
+      "pricePerPerson": 3,
+      "isAvailable": true
+    },
+    {
+      "id": "item_12",
+      "name": "Fresh Lemonade",
+      "description": "Handmade lemonade with a hint of mint",
+      "categoryId": "beverages",
+      "pricePerPerson": 3,
+      "isAvailable": true
+    }
+  ],
+  "presetMeals": [
+    {
+      "id": "preset_1",
+      "name": "Southern Classic",
+      "description": "Our signature meal: Herb-Roasted Chicken, Mac & Cheese, Collard Greens, Peach Cobbler, and Sweet Tea",
+      "itemIds": ["item_3", "item_7", "item_6", "item_9", "item_11"],
+      "pricePerPerson": 28,
+      "isAvailable": true
+    }
+  ]
+}
