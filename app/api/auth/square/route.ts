@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   const params = new URLSearchParams({
     client_id: applicationId,
-    scope: "PAYMENTS_WRITE PAYMENTS_READ ORDERS_WRITE ORDERS_READ MERCHANT_PROFILE_READ",
+    scope: "PAYMENTS_WRITE PAYMENTS_READ ORDERS_WRITE ORDERS_READ MERCHANT_PROFILE_READ INVOICES_WRITE INVOICES_READ CUSTOMERS_WRITE CUSTOMERS_READ",
     session: "false",
     state,
   });

@@ -89,6 +89,7 @@ export interface PresetMeal {
   itemIds: string[];
   pricePerPerson: number;
   isAvailable: boolean;
+  image?: string;
 }
 
 export interface MenuConfig {
@@ -103,7 +104,29 @@ export interface MealSelection {
   selectedItemIds?: string[];
 }
 
+// Business Info (admin-managed)
+export interface BusinessInfo {
+  email: string;
+  phone: string;
+  address: string;
+  hours: {
+    weekdays: string;
+    weekends: string;
+  };
+  aboutUs: string[];
+  aboutImage: string;
+  socialLinks: {
+    facebook: string;
+    instagram: string;
+    twitter: string;
+    tiktok: string;
+    youtube: string;
+  };
+}
+
 // Calendar
+export type BookingStatus = "pending" | "approved" | "rejected";
+
 export interface CalendarBooking {
   id: string;
   summary: string;
@@ -112,6 +135,12 @@ export interface CalendarBooking {
   end: string;
   status: string;
   created: string;
+  bookingStatus: BookingStatus;
+  clientEmail: string | null;
+  clientPhone: string | null;
+  estimatedTotal: number | null;
+  invoiceId: string | null;
+  invoiceUrl: string | null;
 }
 
 // Square

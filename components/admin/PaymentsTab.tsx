@@ -4,10 +4,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Loader2,
   DollarSign,
+  Plus,
   RefreshCw,
   ExternalLink,
   AlertCircle,
   CheckCircle2,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SquarePayment } from "@/lib/types";
@@ -54,6 +56,8 @@ export default function PaymentsTab() {
   const [payments, setPayments] = useState<SquarePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // New payment form
   const [showForm, setShowForm] = useState(false);
@@ -84,7 +88,6 @@ export default function PaymentsTab() {
 
   useEffect(() => {
     fetchPayments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initSquareCard = useCallback(async () => {
@@ -186,6 +189,24 @@ export default function PaymentsTab() {
     }
   };
 
+  const filteredPayments = payments.filter((p) => {
+    if (statusFilter !== "all" && p.status !== statusFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const searchable = [
+        p.description,
+        formatAmount(p.amount),
+        String(p.amount),
+        p.status,
+        formatDate(p.createdAt),
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!searchable.includes(q)) return false;
+    }
+    return true;
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -209,10 +230,10 @@ export default function PaymentsTab() {
           </button>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-primary text-white font-heading font-bold text-xs tracking-[0.15em] uppercase px-5 py-2.5 rounded-sm hover:bg-primary-dark transition-all"
+            className="bg-primary text-white font-body font-bold text-xs tracking-wide uppercase px-5 py-2.5 rounded-sm hover:bg-primary-dark transition-all flex items-center gap-1.5"
           >
-            <DollarSign size={14} className="inline -mt-0.5 mr-1" />
-            New Payment
+            <Plus size={14} strokeWidth={2.5} />
+            Collect Payment
           </button>
         </div>
       </div>
@@ -228,6 +249,43 @@ export default function PaymentsTab() {
           <AlertCircle size={16} /> {paymentError}
         </div>
       )}
+
+      {/* Search & Filter */}
+      <div className="relative mb-4">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted/50"
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by amount, description, date..."
+          className={cn(inputClass, "pl-10")}
+        />
+      </div>
+      <div className="flex gap-1 border border-sky-deep rounded-sm p-1 mb-6 w-fit">
+        {["all", "COMPLETED", "PENDING", "FAILED", "CANCELED"].map((status) => {
+          const count =
+            status === "all"
+              ? payments.length
+              : payments.filter((p) => p.status === status).length;
+          return (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={cn(
+                "px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-colors",
+                statusFilter === status
+                  ? "bg-primary text-white"
+                  : "text-slate-muted hover:text-slate-text"
+              )}
+            >
+              {status === "all" ? "All" : status} ({count})
+            </button>
+          );
+        })}
+      </div>
 
       {/* New payment form */}
       {showForm && (
@@ -297,18 +355,22 @@ export default function PaymentsTab() {
       )}
 
       {/* Payments table */}
-      {!error && payments.length === 0 && (
+      {!error && filteredPayments.length === 0 && (
         <div className="text-center py-16">
           <DollarSign
             className="mx-auto text-slate-muted/30 mb-4"
             size={48}
             strokeWidth={1}
           />
-          <p className="text-slate-muted text-sm">No payments found.</p>
+          <p className="text-slate-muted text-sm">
+            {payments.length === 0
+              ? "No payments found."
+              : "No payments match your search."}
+          </p>
         </div>
       )}
 
-      {!error && payments.length > 0 && (
+      {!error && filteredPayments.length > 0 && (
         <>
           {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
@@ -333,7 +395,7 @@ export default function PaymentsTab() {
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p) => (
+                {filteredPayments.map((p) => (
                   <tr key={p.id} className="border-b border-sky-deep/50">
                     <td className="py-3 px-2 text-slate-muted text-sm whitespace-nowrap">
                       {formatDate(p.createdAt)}

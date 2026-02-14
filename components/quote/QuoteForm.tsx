@@ -15,7 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EVENT_TYPES, SERVICE_STYLES } from "@/lib/constants";
+import { SERVICE_STYLES } from "@/lib/constants";
 import {
   PricingConfig,
   QuoteEstimate,
@@ -222,7 +222,7 @@ export default function QuoteForm() {
       const preset = menuConfig.presetMeals.find(
         (p) => p.id === form.mealSelection!.presetMealId
       );
-      return preset ? `${preset.name} (${formatCurrency(preset.pricePerPerson)}/person)` : null;
+      return preset ? preset.name : null;
     }
     if (form.mealSelection.type === "custom" && form.mealSelection.selectedItemIds?.length) {
       const items = form.mealSelection.selectedItemIds
@@ -342,14 +342,12 @@ export default function QuoteForm() {
                 className={selectClass}
               >
                 <option value="">Select event type...</option>
-                {EVENT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                    {pricing
-                      ? ` — ${formatCurrency(pricing.eventTypes[type] ?? 0)} base`
-                      : ""}
-                  </option>
-                ))}
+                {pricing &&
+                  Object.keys(pricing.eventTypes).map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
@@ -360,31 +358,17 @@ export default function QuoteForm() {
                 className={selectClass}
               >
                 <option value="">Select service style...</option>
-                {SERVICE_STYLES.map((style) => {
-                  const mod = pricing?.serviceStyles[style] ?? 0;
-                  const modLabel =
-                    mod > 0
-                      ? ` (+${formatCurrency(mod)})`
-                      : mod < 0
-                      ? ` (${formatCurrency(mod)})`
-                      : "";
-                  return (
-                    <option key={style} value={style}>
-                      {style}{modLabel}
-                    </option>
-                  );
-                })}
+                {SERVICE_STYLES.map((style) => (
+                  <option key={style} value={style}>
+                    {style}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label className={labelClass}>
                 <Users size={12} className="inline mr-1.5 -mt-0.5" />
                 Guest Count *
-                {pricing && (
-                  <span className="font-normal normal-case tracking-normal text-slate-muted/60 ml-1">
-                    ({formatCurrency(pricing.perPersonRate)}/person)
-                  </span>
-                )}
               </label>
               <input
                 type="number"
@@ -494,16 +478,12 @@ export default function QuoteForm() {
                             )}
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-primary">
-                              {formatCurrency(preset.pricePerPerson)}/person
-                            </p>
                             {parseInt(form.guestCount) > 0 && (
-                              <p className="text-xs text-slate-muted/60">
+                              <p className="text-sm font-bold text-primary">
                                 {formatCurrency(
                                   preset.pricePerPerson *
                                     parseInt(form.guestCount)
-                                )}{" "}
-                                total
+                                )}
                               </p>
                             )}
                           </div>
@@ -573,10 +553,14 @@ export default function QuoteForm() {
                                       </p>
                                     </div>
                                   </div>
-                                  <span className="text-sm font-bold text-primary shrink-0">
-                                    {formatCurrency(item.pricePerPerson)}
-                                    /person
-                                  </span>
+                                  {parseInt(form.guestCount) > 0 && (
+                                    <span className="text-sm font-bold text-primary shrink-0">
+                                      {formatCurrency(
+                                        item.pricePerPerson *
+                                          parseInt(form.guestCount)
+                                      )}
+                                    </span>
+                                  )}
                                 </div>
                               </button>
                             );
@@ -647,15 +631,8 @@ export default function QuoteForm() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-bold text-primary">
-                        {addOn.pricingType === "per-person"
-                          ? `${formatCurrency(addOn.price)}/person`
-                          : formatCurrency(addOn.price)}
+                        {formatCurrency(cost)}
                       </p>
-                      {addOn.pricingType === "per-person" && guestCount > 0 && (
-                        <p className="text-xs text-slate-muted/60">
-                          {formatCurrency(cost)} total
-                        </p>
-                      )}
                     </div>
                   </div>
                 </button>
@@ -795,8 +772,7 @@ export default function QuoteForm() {
                               key={id}
                               className="text-slate-muted text-xs ml-2"
                             >
-                              &bull; {item.name} (
-                              {formatCurrency(item.pricePerPerson)}/person)
+                              &bull; {item.name}
                             </p>
                           ) : null;
                         })}
@@ -881,11 +857,7 @@ export default function QuoteForm() {
                   )}
                   <div className="flex justify-between">
                     <span className="text-slate-muted">
-                      {form.guestCount} guests &times;{" "}
-                      {pricing
-                        ? formatCurrency(pricing.perPersonRate)
-                        : ""}{" "}
-                      per person
+                      {form.guestCount} guests
                     </span>
                     <span className="text-slate-text">
                       {formatCurrency(estimate.perPersonTotal)}
@@ -1026,7 +998,7 @@ export default function QuoteForm() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-muted">
-                    Per-person ({form.guestCount} guests)
+                    {form.guestCount} guests
                   </span>
                   <span className="text-slate-text">
                     {formatCurrency(estimate.perPersonTotal)}

@@ -5,6 +5,15 @@ import { saveCredentials } from "@/lib/credentials";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
+  const state = request.nextUrl.searchParams.get("state");
+  const storedState = request.cookies.get("google_oauth_state")?.value;
+
+  // CSRF validation
+  if (!state || state !== storedState) {
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/login?error=invalid_state`
+    );
+  }
 
   if (!code) {
     return NextResponse.redirect(
@@ -38,14 +47,19 @@ export async function GET(request: NextRequest) {
 
     // Store Google credentials for Calendar/Gmail API access
     if (tokens.refresh_token) {
-      await saveCredentials({
-        google: {
-          refreshToken: tokens.refresh_token,
-          email,
-          name,
-          connectedAt: new Date().toISOString(),
-        },
-      });
+      try {
+        await saveCredentials({
+          google: {
+            refreshToken: tokens.refresh_token,
+            email,
+            name,
+            connectedAt: new Date().toISOString(),
+          },
+        });
+      } catch {
+        // Filesystem may be read-only on Vercel — fall back to env var
+        console.warn("Could not save credentials to disk, using env var fallback");
+      }
     }
 
     // Create session JWT
@@ -62,6 +76,7 @@ export async function GET(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",
     });
+    response.cookies.set("google_oauth_state", "", { maxAge: 0, path: "/" });
 
     return response;
   } catch (error) {

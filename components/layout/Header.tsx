@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "@/lib/constants";
@@ -27,8 +28,14 @@ export default function Header() {
     >
       <nav className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between h-16 md:h-20">
         {/* Logo */}
-        <Link href="/" className="flex-shrink-0 font-heading font-bold text-lg md:text-xl text-navy tracking-wide">
-
+        <Link href="/" className="flex-shrink-0">
+          <Image
+            src="/logo.png"
+            alt="I'm A Servant First LLC"
+            width={160}
+            height={80}
+            className="h-10 md:h-12 w-auto"
+          />
         </Link>
 
         {/* Desktop Nav */}

@@ -15,7 +15,8 @@ export const BUSINESS = {
 export const NAV_LINKS: NavLink[] = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
-  { label: "Services", href: "/services" },
+  { label: "Specialties", href: "/services" },
+  { label: "Menus", href: "/menus" },
   { label: "Quote", href: "/quote" },
   { label: "Contact", href: "/contact" },
 ];
@@ -99,6 +100,71 @@ export const SERVICES: Service[] = [
       "Coordination with venue",
     ],
   },
+  {
+    name: "Birthday Parties",
+    description:
+      "Celebrate another year with food worth remembering. From milestone birthdays to backyard cookouts, we create menus that make the guest of honor — and every guest — feel special.",
+    icon: "Cake",
+    included: [
+      "Custom birthday menu planning",
+      "Themed food presentation",
+      "Dessert and cake table setup",
+      "Kid-friendly menu options",
+      "Setup and cleanup included",
+    ],
+  },
+  {
+    name: "Family Reunions",
+    description:
+      "Bring the whole family together over the food that raised you. Our reunion packages serve large groups with the soul food classics that bring generations to the table.",
+    icon: "Users",
+    included: [
+      "Large group buffet service",
+      "Classic southern comfort menu",
+      "Outdoor event support",
+      "Flexible headcount accommodations",
+      "Family-style serving options",
+    ],
+  },
+  {
+    name: "Baby Showers & Bridal Showers",
+    description:
+      "Shower the guest of honor with beautifully presented food that matches the joy of the occasion. Light bites, full spreads, and everything in between.",
+    icon: "Gift",
+    included: [
+      "Elegant finger food options",
+      "Custom dessert displays",
+      "Brunch and afternoon tea menus",
+      "Decorative food presentation",
+      "Full service or drop-off available",
+    ],
+  },
+  {
+    name: "Graduation Celebrations",
+    description:
+      "They worked hard — now it's time to eat well. From intimate family dinners to full-blown graduation parties, we cater the food so you can focus on the celebration.",
+    icon: "GraduationCap",
+    included: [
+      "Customizable party platters",
+      "Buffet or plated service",
+      "Outdoor cookout options",
+      "Accommodates large guest lists",
+      "Setup and cleanup included",
+    ],
+  },
+  {
+    name: "School Events",
+    description:
+      "Fuel the fun at school functions with crowd-pleasing food that keeps students, staff, and parents coming back for seconds. From fundraisers to field days, we've got it covered.",
+    icon: "School",
+    included: [
+      "Large volume meal prep",
+      "Kid-friendly and allergy-conscious menus",
+      "Grab-and-go or buffet options",
+      "Budget-friendly packages",
+      "Delivery, setup, and cleanup",
+    ],
+  },
 ];
 
 export const TESTIMONIALS: Testimonial[] = [
@@ -156,6 +222,11 @@ export const EVENT_TYPES = [
   "Holiday Event",
   "Church / Community Event",
   "Funeral Repast",
+  "Birthday Party",
+  "Family Reunion",
+  "Baby Shower / Bridal Shower",
+  "Graduation Celebration",
+  "School Event",
   "Other",
 ] as const;
 

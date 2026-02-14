@@ -1,7 +1,14 @@
 import { google } from "googleapis";
-import { TimeSlot, PricingConfig, QuoteEstimate, CalendarBooking } from "./types";
+import { TimeSlot, PricingConfig, QuoteEstimate, CalendarBooking, BookingStatus } from "./types";
 import { formatCurrency } from "./pricing";
 import { getGoogleRefreshToken } from "./credentials";
+
+// Color IDs for Google Calendar events
+const STATUS_COLORS: Record<BookingStatus, string> = {
+  pending: "6",   // tangerine/orange
+  approved: "10", // basil/green
+  rejected: "11", // tomato/red
+};
 
 async function getCalendarClient() {
   const oauth2Client = new google.auth.OAuth2(
@@ -13,6 +20,18 @@ async function getCalendarClient() {
   oauth2Client.setCredentials({ refresh_token: refreshToken });
 
   return google.calendar({ version: "v3", auth: oauth2Client });
+}
+
+export async function getGmailOAuth2Client() {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+
+  const refreshToken = await getGoogleRefreshToken();
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+  return oauth2Client;
 }
 
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || "primary";
@@ -85,24 +104,36 @@ export async function listUpcomingBookings(): Promise<CalendarBooking[]> {
   try {
     const calendar = await getCalendarClient();
     const now = new Date();
+    // Look back 30 days for recent bookings
+    const timeMin = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
     const response = await calendar.events.list({
       calendarId: CALENDAR_ID,
-      timeMin: now.toISOString(),
-      maxResults: 50,
+      timeMin: timeMin.toISOString(),
+      maxResults: 100,
       singleEvents: true,
       orderBy: "startTime",
     });
 
     const events = response.data.items || [];
-    return events.map((event) => ({
-      id: event.id || "",
-      summary: event.summary || "Untitled",
-      description: event.description || "",
-      start: event.start?.dateTime || event.start?.date || "",
-      end: event.end?.dateTime || event.end?.date || "",
-      status: event.status || "confirmed",
-      created: event.created || "",
-    }));
+    return events.map((event) => {
+      const props = event.extendedProperties?.private || {};
+      return {
+        id: event.id || "",
+        summary: event.summary || "Untitled",
+        description: event.description || "",
+        start: event.start?.dateTime || event.start?.date || "",
+        end: event.end?.dateTime || event.end?.date || "",
+        status: event.status || "confirmed",
+        created: event.created || "",
+        bookingStatus: (props.bookingStatus as BookingStatus) || "approved",
+        clientEmail: props.clientEmail || null,
+        clientPhone: props.clientPhone || null,
+        estimatedTotal: props.estimatedTotal ? Number(props.estimatedTotal) : null,
+        invoiceId: props.invoiceId || null,
+        invoiceUrl: props.invoiceUrl || null,
+      };
+    });
   } catch (error) {
     console.error("Error listing bookings:", error);
     return [];
@@ -160,6 +191,8 @@ export async function createBookingEvent(data: {
           .filter(Boolean)
       : [];
 
+  const estimatedTotal = data.estimate?.total ?? 0;
+
   const calendar = await getCalendarClient();
   const event = await calendar.events.insert({
     calendarId: CALENDAR_ID,
@@ -195,11 +228,54 @@ export async function createBookingEvent(data: {
         dateTime: endTime.toISOString(),
         timeZone: TIMEZONE,
       },
-      colorId: "6", // Tangerine/orange for visibility
+      colorId: STATUS_COLORS.pending,
+      extendedProperties: {
+        private: {
+          bookingStatus: "pending",
+          clientEmail: data.email,
+          clientPhone: data.phone,
+          estimatedTotal: String(estimatedTotal),
+          invoiceId: "",
+          invoiceUrl: "",
+        },
+      },
     },
   });
 
   return { eventId: event.data.id || "" };
+}
+
+export async function updateBookingStatus(
+  eventId: string,
+  status: BookingStatus,
+  extraProps?: Record<string, string>
+) {
+  const calendar = await getCalendarClient();
+
+  // Get current event to preserve existing extended properties
+  const existing = await calendar.events.get({
+    calendarId: CALENDAR_ID,
+    eventId,
+  });
+
+  const currentProps = existing.data.extendedProperties?.private || {};
+
+  const updatedProps: Record<string, string> = {
+    ...currentProps,
+    bookingStatus: status,
+    ...extraProps,
+  };
+
+  await calendar.events.patch({
+    calendarId: CALENDAR_ID,
+    eventId,
+    requestBody: {
+      colorId: STATUS_COLORS[status],
+      extendedProperties: {
+        private: updatedProps,
+      },
+    },
+  });
 }
 
 function formatTimeLabel(date: Date): string {

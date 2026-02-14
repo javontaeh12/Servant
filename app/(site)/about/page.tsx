@@ -1,6 +1,8 @@
 import { HandHeart, Home, ChefHat, Sparkles } from "lucide-react";
+import Image from "next/image";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { VALUES } from "@/lib/constants";
+import { readBusiness } from "@/lib/business-storage";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   HandHeart,
@@ -9,7 +11,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Sparkles,
 };
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AboutPage() {
+  const business = await readBusiness();
+
   return (
     <>
       {/* Page Hero */}
@@ -28,13 +34,22 @@ export default function AboutPage() {
       {/* Story Section */}
       <section className="py-20 md:py-28 px-6 sm:px-8 bg-white">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
-          {/* Image placeholder */}
+          {/* Image */}
           <div className="aspect-[4/5] bg-sky border border-sky-deep relative overflow-hidden rounded-sm">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-primary/20 font-heading text-sm tracking-[0.3em] uppercase">
-                Your Photo Here
-              </p>
-            </div>
+            {business.aboutImage ? (
+              <Image
+                src={business.aboutImage}
+                alt="About I'm A Servant First LLC"
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-primary/20 font-heading text-sm tracking-[0.3em] uppercase">
+                  Your Photo Here
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Story text */}
@@ -47,25 +62,9 @@ export default function AboutPage() {
               <span className="text-primary italic">Purpose</span>
             </h2>
             <div className="space-y-5 text-slate-muted text-[15px] leading-[1.8]">
-              <p>
-                At I&apos;m A Servant First LLC, our name is our promise. Before
-                we are caterers, before we are chefs, we are servants. Every
-                dish we prepare and every table we set is an act of service —
-                rooted in love, excellence, and the rich tradition of southern
-                hospitality.
-              </p>
-              <p>
-                Born from a deep passion for bringing people together around
-                great food, our company was founded on the belief that catering
-                is more than a meal — it&apos;s an experience. We draw from
-                generations of southern cooking traditions, blending time-honored
-                recipes with modern culinary artistry.
-              </p>
-              <p>
-                Whether it&apos;s a wedding celebration, a corporate gathering,
-                or a family reunion, we approach every event with the same heart:
-                to serve first, and to serve excellently.
-              </p>
+              {business.aboutUs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
             </div>
           </div>
         </div>

@@ -29,7 +29,7 @@ export default function ServicesPreview() {
         {/* Heading */}
         <div className="text-center mb-16 md:mb-20">
           <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold mb-5 text-slate-text">
-            What We Offer
+            Our Specialties
           </h2>
           <div className="w-[60px] h-[2px] bg-primary mx-auto mb-5" />
           <p className="text-base md:text-lg max-w-2xl mx-auto leading-relaxed text-slate-muted">
@@ -64,7 +64,7 @@ export default function ServicesPreview() {
             href="/services"
             className="inline-block border border-primary/40 text-primary hover:bg-primary hover:text-white font-heading font-bold text-sm tracking-[0.15em] uppercase px-8 py-3.5 rounded-sm transition-all duration-300"
           >
-            View All Services
+            View More Specialties
           </Link>
         </div>
       </div>

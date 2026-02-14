@@ -22,6 +22,30 @@ export const metadata: Metadata = {
   },
   description:
     "Upscale southern catering for weddings, corporate events, and private gatherings. Crafted with heart, served with excellence.",
+  metadataBase: new URL("https://iasfcatering.com"),
+  openGraph: {
+    title: "I'm A Servant First LLC | Premium Southern Catering",
+    description:
+      "Upscale southern catering for weddings, corporate events, and private gatherings. Crafted with heart, served with excellence.",
+    url: "https://iasfcatering.com",
+    siteName: "I'm A Servant First LLC",
+    images: [
+      {
+        url: "/logo.png",
+        width: 800,
+        height: 800,
+        alt: "I'm A Servant First LLC Logo",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "I'm A Servant First LLC | Premium Southern Catering",
+    description:
+      "Upscale southern catering for weddings, corporate events, and private gatherings.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({

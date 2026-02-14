@@ -1,20 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Loader2,
   Calendar,
+  Clock,
   Users,
   Mail,
   Phone,
+  DollarSign,
   RefreshCw,
   Plus,
+  Check,
+  X,
   CheckCircle2,
   AlertCircle,
+  ExternalLink,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CalendarBooking, TimeSlot } from "@/lib/types";
+import { CalendarBooking, BookingStatus, TimeSlot } from "@/lib/types";
 import { EVENT_TYPES, SERVICE_STYLES } from "@/lib/constants";
+
+type FilterTab = "all" | BookingStatus;
+
+interface ApprovalModalData {
+  booking: CalendarBooking;
+  finalTotal: string;
+  depositAmount: string;
+}
 
 const inputClass =
   "w-full bg-sky/50 border border-sky-deep text-slate-text px-4 py-3 focus:border-primary/50 focus:outline-none transition-colors text-sm rounded-sm";
@@ -41,16 +55,33 @@ function formatDateTime(isoString: string) {
     month: "short",
     day: "numeric",
     year: "numeric",
+  });
+}
+
+function formatTime(isoString: string) {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  return d.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
 }
 
+const statusBadgeStyles: Record<BookingStatus, string> = {
+  pending: "bg-amber-100 text-amber-800 border-amber-200",
+  approved: "bg-green-100 text-green-800 border-green-200",
+  rejected: "bg-red-100 text-red-800 border-red-200",
+};
+
 export default function BookingsTab() {
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterTab>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [approvalModal, setApprovalModal] = useState<ApprovalModalData | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Add Booking form state
   const [showForm, setShowForm] = useState(false);
@@ -71,7 +102,7 @@ export default function BookingsTab() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -84,12 +115,35 @@ export default function BookingsTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBookings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchBookings]);
+
+  const pendingCount = bookings.filter((b) => b.bookingStatus === "pending").length;
+  const filteredBookings = bookings.filter((b) => {
+    if (filter !== "all" && b.bookingStatus !== filter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const parsed = parseBookingDescription(b.description);
+      const searchable = [
+        b.summary,
+        b.clientEmail,
+        b.clientPhone,
+        parsed.client,
+        parsed.email,
+        parsed.phone,
+        parsed["event type"],
+        parsed["service style"],
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!searchable.includes(q)) return false;
+    }
+    return true;
+  });
 
   const resetForm = () => {
     setClientName("");
@@ -118,7 +172,7 @@ export default function BookingsTab() {
         setAvailableSlots(data.slots || []);
       }
     } catch {
-      // Slots failed to load — user can still type manually
+      // Slots failed to load
     } finally {
       setLoadingSlots(false);
     }
@@ -166,6 +220,77 @@ export default function BookingsTab() {
     }
   };
 
+  function openApprovalModal(booking: CalendarBooking) {
+    setApprovalModal({
+      booking,
+      finalTotal: booking.estimatedTotal ? String(booking.estimatedTotal) : "",
+      depositAmount: booking.estimatedTotal
+        ? String(Math.round(booking.estimatedTotal * 0.5))
+        : "",
+    });
+  }
+
+  async function handleApprove() {
+    if (!approvalModal) return;
+
+    const { booking, finalTotal, depositAmount } = approvalModal;
+    const deposit = Number(depositAmount);
+    const total = Number(finalTotal);
+
+    if (!total || total <= 0) return;
+    if (!deposit || deposit <= 0 || deposit > total) return;
+
+    const parsed = parseBookingDescription(booking.description);
+
+    setActionLoading(booking.id);
+    try {
+      const res = await fetch(`/api/calendar/bookings/${booking.id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          finalTotal: total,
+          depositAmount: deposit,
+          clientEmail: booking.clientEmail || parsed.email || "",
+          clientName: parsed.client || booking.summary.split(" - ")[1]?.split(" - ")[0] || "Client",
+          eventType: parsed["event type"] || booking.summary.split(" - ").pop() || "Catering Event",
+          eventDate: booking.start.split("T")[0],
+          guestCount: parsed["guest count"] || "0",
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to approve");
+      }
+
+      setApprovalModal(null);
+      await fetchBookings();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to approve booking");
+      setTimeout(() => setSubmitError(null), 4000);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleReject(bookingId: string) {
+    if (!confirm("Are you sure you want to reject this booking?")) return;
+
+    setActionLoading(bookingId);
+    try {
+      const res = await fetch(`/api/calendar/bookings/${bookingId}/reject`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to reject");
+      await fetchBookings();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to reject booking");
+      setTimeout(() => setSubmitError(null), 4000);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   const today = new Date().toISOString().split("T")[0];
 
   if (loading) {
@@ -192,9 +317,28 @@ export default function BookingsTab() {
 
   return (
     <div>
+      {/* Pending banner */}
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-3 border border-amber-200 bg-amber-50 rounded-sm p-4 mb-6">
+          <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+          <div className="flex-1">
+            <p className="text-amber-800 text-sm font-bold">
+              {pendingCount} booking{pendingCount !== 1 ? "s" : ""} awaiting review
+            </p>
+            <p className="text-amber-600 text-xs">Approve or reject pending bookings to notify clients.</p>
+          </div>
+          <button
+            onClick={() => setFilter("pending")}
+            className="bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-sm hover:bg-amber-700 transition-colors"
+          >
+            View Pending
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-primary text-xs font-bold tracking-[0.15em] uppercase">
-          Upcoming Bookings ({bookings.length})
+          Bookings ({bookings.length})
         </h2>
         <div className="flex items-center gap-3">
           <button
@@ -214,6 +358,43 @@ export default function BookingsTab() {
             Add Booking
           </button>
         </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted/50"
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name, email, phone, event type..."
+          className={cn(inputClass, "pl-10")}
+        />
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-1 border border-sky-deep rounded-sm p-1 mb-6 w-fit">
+        {(["all", "pending", "approved", "rejected"] as const).map((tab) => {
+          const count =
+            tab === "all" ? bookings.length : bookings.filter((b) => b.bookingStatus === tab).length;
+          return (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={cn(
+                "px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-colors",
+                filter === tab
+                  ? "bg-primary text-white"
+                  : "text-slate-muted hover:text-slate-text"
+              )}
+            >
+              {tab} ({count})
+            </button>
+          );
+        })}
       </div>
 
       {/* Status messages */}
@@ -287,8 +468,7 @@ export default function BookingsTab() {
               <label className={labelClass}>Time Slot *</label>
               {loadingSlots ? (
                 <div className="flex items-center gap-2 px-4 py-3 text-slate-muted text-sm">
-                  <Loader2 className="animate-spin" size={14} /> Loading
-                  slots...
+                  <Loader2 className="animate-spin" size={14} /> Loading slots...
                 </div>
               ) : (
                 <select
@@ -398,121 +578,225 @@ export default function BookingsTab() {
         </form>
       )}
 
-      {bookings.length === 0 && !showForm ? (
+      {/* Bookings list */}
+      {filteredBookings.length === 0 && !showForm ? (
         <div className="text-center py-16">
           <Calendar className="mx-auto text-slate-muted/30 mb-4" size={48} strokeWidth={1} />
-          <p className="text-slate-muted text-sm">No upcoming bookings found.</p>
+          <p className="text-slate-muted text-sm">
+            No {filter !== "all" ? filter : ""} bookings found.
+          </p>
         </div>
       ) : (
-        bookings.length > 0 && (
-          <>
-            {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-sky-deep">
-                    <th className="text-left py-3 px-2 text-slate-muted text-xs font-bold tracking-wide uppercase">
-                      Event
-                    </th>
-                    <th className="text-left py-3 px-2 text-slate-muted text-xs font-bold tracking-wide uppercase">
-                      Date & Time
-                    </th>
-                    <th className="text-left py-3 px-2 text-slate-muted text-xs font-bold tracking-wide uppercase">
-                      Client
-                    </th>
-                    <th className="text-left py-3 px-2 text-slate-muted text-xs font-bold tracking-wide uppercase">
-                      Details
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bookings.map((booking) => {
-                    const parsed = parseBookingDescription(booking.description);
-                    return (
-                      <tr key={booking.id} className="border-b border-sky-deep/50">
-                        <td className="py-4 px-2">
-                          <p className="text-slate-text font-bold text-sm">
-                            {booking.summary}
-                          </p>
-                        </td>
-                        <td className="py-4 px-2 text-slate-muted text-sm whitespace-nowrap">
-                          {formatDateTime(booking.start)}
-                        </td>
-                        <td className="py-4 px-2">
-                          {parsed.client && (
-                            <p className="text-slate-text text-sm">{parsed.client}</p>
-                          )}
-                          {parsed.email && (
-                            <p className="text-slate-muted text-xs flex items-center gap-1">
-                              <Mail size={10} /> {parsed.email}
-                            </p>
-                          )}
-                          {parsed.phone && (
-                            <p className="text-slate-muted text-xs flex items-center gap-1">
-                              <Phone size={10} /> {parsed.phone}
-                            </p>
-                          )}
-                        </td>
-                        <td className="py-4 px-2">
-                          {parsed["guest count"] && (
-                            <p className="text-slate-muted text-xs flex items-center gap-1">
-                              <Users size={10} /> {parsed["guest count"]} guests
-                            </p>
-                          )}
-                          {parsed["event type"] && (
-                            <p className="text-slate-muted text-xs">
-                              {parsed["event type"]}
-                            </p>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+        filteredBookings.length > 0 && (
+          <div className="space-y-3">
+            {filteredBookings.map((booking) => {
+              const parsed = parseBookingDescription(booking.description);
+              const isActioning = actionLoading === booking.id;
 
-            {/* Mobile cards */}
-            <div className="md:hidden space-y-4">
-              {bookings.map((booking) => {
-                const parsed = parseBookingDescription(booking.description);
-                return (
-                  <div
-                    key={booking.id}
-                    className="border border-sky-deep rounded-sm p-4 space-y-3"
-                  >
-                    <p className="text-slate-text font-bold text-sm">
-                      {booking.summary}
-                    </p>
-                    <p className="text-slate-muted text-xs">
-                      {formatDateTime(booking.start)}
-                    </p>
-                    {parsed.client && (
-                      <p className="text-slate-text text-sm">{parsed.client}</p>
-                    )}
-                    <div className="flex flex-wrap gap-3 text-xs text-slate-muted">
-                      {parsed.email && (
-                        <span className="flex items-center gap-1">
-                          <Mail size={10} /> {parsed.email}
+              return (
+                <div
+                  key={booking.id}
+                  className="border border-sky-deep rounded-sm p-4 hover:border-primary/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-slate-text font-bold text-sm truncate">
+                          {booking.summary}
+                        </h3>
+                        <span
+                          className={cn(
+                            "inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border",
+                            statusBadgeStyles[booking.bookingStatus]
+                          )}
+                        >
+                          {booking.bookingStatus}
                         </span>
+                      </div>
+
+                      {parsed.client && (
+                        <p className="text-slate-muted text-sm mb-2">{parsed.client}</p>
                       )}
-                      {parsed.phone && (
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-muted overflow-hidden">
                         <span className="flex items-center gap-1">
-                          <Phone size={10} /> {parsed.phone}
+                          <Calendar size={12} />
+                          {formatDateTime(booking.start)}
                         </span>
-                      )}
-                      {parsed["guest count"] && (
                         <span className="flex items-center gap-1">
-                          <Users size={10} /> {parsed["guest count"]} guests
+                          <Clock size={12} />
+                          {formatTime(booking.start)} - {formatTime(booking.end)}
                         </span>
+                        {(booking.clientEmail || parsed.email) && (
+                          <span className="flex items-center gap-1 truncate max-w-[200px]">
+                            <Mail size={12} className="flex-shrink-0" />
+                            <span className="truncate">{booking.clientEmail || parsed.email}</span>
+                          </span>
+                        )}
+                        {(booking.clientPhone || parsed.phone) && (
+                          <span className="flex items-center gap-1">
+                            <Phone size={12} />
+                            {booking.clientPhone || parsed.phone}
+                          </span>
+                        )}
+                        {parsed["guest count"] && (
+                          <span className="flex items-center gap-1">
+                            <Users size={12} />
+                            {parsed["guest count"]} guests
+                          </span>
+                        )}
+                        {booking.estimatedTotal != null && booking.estimatedTotal > 0 && (
+                          <span className="flex items-center gap-1 font-bold text-slate-text">
+                            <DollarSign size={12} />
+                            ${booking.estimatedTotal.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+
+                      {booking.invoiceUrl && (
+                        <a
+                          href={booking.invoiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:text-primary-dark font-bold"
+                        >
+                          <ExternalLink size={12} />
+                          View Invoice
+                        </a>
                       )}
                     </div>
+
+                    {/* Action buttons for pending bookings */}
+                    {booking.bookingStatus === "pending" && (
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => openApprovalModal(booking)}
+                          disabled={isActioning}
+                          className="flex items-center gap-1 px-4 py-2.5 bg-green-600 text-white rounded-sm text-xs font-bold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                        >
+                          {isActioning ? (
+                            <Loader2 className="animate-spin" size={14} />
+                          ) : (
+                            <Check size={14} />
+                          )}
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(booking.id)}
+                          disabled={isActioning}
+                          className="flex items-center gap-1 px-4 py-2.5 bg-red-600 text-white rounded-sm text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          <X size={14} />
+                          Reject
+                        </button>
+                      </div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </>
+                </div>
+              );
+            })}
+          </div>
         )
+      )}
+
+      {/* Approval Modal */}
+      {approvalModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setApprovalModal(null)}
+        >
+          <div
+            className="bg-white rounded-sm shadow-xl w-full max-w-md mx-4 p-6 border border-sky-deep"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-slate-text text-sm font-bold mb-1">Approve Booking</h3>
+            <p className="text-slate-muted text-xs mb-5">
+              Set the final price and deposit. A Square invoice will be created and emailed to the client.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>Final Total ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={approvalModal.finalTotal}
+                  onChange={(e) =>
+                    setApprovalModal({ ...approvalModal, finalTotal: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Deposit Amount ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={approvalModal.depositAmount}
+                  onChange={(e) =>
+                    setApprovalModal({ ...approvalModal, depositAmount: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="0.00"
+                />
+              </div>
+
+              {/* Preview split */}
+              {Number(approvalModal.finalTotal) > 0 && Number(approvalModal.depositAmount) > 0 && (
+                <div className="border border-sky-deep rounded-sm p-3 text-sm">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-slate-muted text-xs">Deposit (due in 3 days)</span>
+                    <span className="text-slate-text text-xs font-bold">
+                      ${Number(approvalModal.depositAmount).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-slate-muted text-xs">Balance (due before event)</span>
+                    <span className="text-slate-text text-xs font-bold">
+                      ${(Number(approvalModal.finalTotal) - Number(approvalModal.depositAmount)).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-sky-deep">
+                    <span className="text-slate-text text-xs font-bold uppercase">Total</span>
+                    <span className="text-slate-text text-sm font-bold">
+                      ${Number(approvalModal.finalTotal).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setApprovalModal(null)}
+                  className="flex-1 border border-sky-deep text-slate-muted text-xs font-bold uppercase tracking-wide px-4 py-3 rounded-sm hover:bg-sky/50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={actionLoading === approvalModal.booking.id}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white text-xs font-bold uppercase tracking-wide px-4 py-3 rounded-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {actionLoading === approvalModal.booking.id ? (
+                    <>
+                      <Loader2 className="animate-spin" size={14} />
+                      Creating Invoice...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      Approve & Invoice
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

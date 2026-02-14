@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Link as LinkIcon,
   Home,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ import BookingsTab from "@/components/admin/BookingsTab";
 import PaymentsTab from "@/components/admin/PaymentsTab";
 import MenuTab from "@/components/admin/MenuTab";
 import PricingTab from "@/components/admin/PricingTab";
+import BusinessTab from "@/components/admin/BusinessTab";
 import { Suspense } from "react";
 
 const TABS = [
@@ -27,6 +29,7 @@ const TABS = [
   { id: "payments", label: "Payments", icon: DollarSign },
   { id: "menu", label: "Menu", icon: UtensilsCrossed },
   { id: "pricing", label: "Pricing", icon: Settings },
+  { id: "business", label: "Business", icon: Building2 },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -149,6 +152,7 @@ function AdminContent() {
         {activeTab === "payments" && <PaymentsTab />}
         {activeTab === "menu" && <MenuTab />}
         {activeTab === "pricing" && <PricingTab />}
+        {activeTab === "business" && <BusinessTab />}
       </div>
     </div>
   );

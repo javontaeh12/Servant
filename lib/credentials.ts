@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import { withFileLock } from "./file-lock";
 
 const CREDENTIALS_PATH = path.join(process.cwd(), "data", "credentials.json");
 
@@ -31,9 +32,11 @@ export async function getCredentials(): Promise<StoredCredentials> {
 export async function saveCredentials(
   creds: StoredCredentials
 ): Promise<void> {
-  const existing = await getCredentials();
-  const merged = { ...existing, ...creds };
-  await fs.writeFile(CREDENTIALS_PATH, JSON.stringify(merged, null, 2));
+  await withFileLock(CREDENTIALS_PATH, async () => {
+    const existing = await getCredentials();
+    const merged = { ...existing, ...creds };
+    await fs.writeFile(CREDENTIALS_PATH, JSON.stringify(merged, null, 2));
+  });
 }
 
 // Get the Google refresh token (stored credentials > env var fallback)

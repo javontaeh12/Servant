@@ -18,10 +18,11 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const secret = new TextEncoder().encode(
-      process.env.SESSION_SECRET || "fallback-secret-change-me"
-    );
-    await jwtVerify(token, secret);
+    const sessionSecret = process.env.SESSION_SECRET;
+    if (!sessionSecret) {
+      throw new Error("SESSION_SECRET is not configured");
+    }
+    await jwtVerify(token, new TextEncoder().encode(sessionSecret));
     return NextResponse.next();
   } catch {
     // Invalid or expired token

@@ -8,9 +8,14 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PricingConfig, AddOn } from "@/lib/types";
+import { SERVICES } from "@/lib/constants";
+
+// Specialty names derived from SERVICES — these are locked (no rename/delete)
+const SPECIALTY_NAMES = new Set(SERVICES.map((s) => s.name));
 
 const inputClass =
   "w-full bg-sky/50 border border-sky-deep text-slate-text px-4 py-3 focus:border-primary/50 focus:outline-none transition-colors text-sm rounded-sm";
@@ -20,6 +25,7 @@ const labelClass =
 export default function PricingTab() {
   const [config, setConfig] = useState<PricingConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -27,7 +33,16 @@ export default function PricingTab() {
   useEffect(() => {
     fetch("/api/pricing")
       .then((res) => res.json())
-      .then((data) => setConfig(data))
+      .then((data: PricingConfig) => {
+        // Ensure all specialties exist in eventTypes
+        const merged = { ...data.eventTypes };
+        for (const name of SPECIALTY_NAMES) {
+          if (!(name in merged)) {
+            merged[name] = 0;
+          }
+        }
+        setConfig({ ...data, eventTypes: merged });
+      })
       .catch(() => setSaveError("Failed to load pricing config"))
       .finally(() => setLoading(false));
   }, []);
@@ -65,11 +80,67 @@ export default function PricingTab() {
     });
   };
 
+  const addEventType = () => {
+    if (!config) return;
+    const name = `New Event Type`;
+    setConfig({
+      ...config,
+      eventTypes: { ...config.eventTypes, [name]: 0 },
+    });
+  };
+
+  const removeEventType = (key: string) => {
+    if (!config) return;
+    const { [key]: _removed, ...rest } = config.eventTypes;
+    void _removed;
+    setConfig({ ...config, eventTypes: rest });
+  };
+
+  const renameEventType = (oldKey: string, newKey: string) => {
+    if (!config || oldKey === newKey) return;
+    const entries = Object.entries(config.eventTypes);
+    const newEntries = entries.map(([k, v]) =>
+      k === oldKey ? [newKey, v] : [k, v]
+    );
+    setConfig({
+      ...config,
+      eventTypes: Object.fromEntries(newEntries),
+    });
+  };
+
   const updateServiceStyle = (key: string, value: number) => {
     if (!config) return;
     setConfig({
       ...config,
       serviceStyles: { ...config.serviceStyles, [key]: value },
+    });
+  };
+
+  const addServiceStyle = () => {
+    if (!config) return;
+    const name = `New Service Style`;
+    setConfig({
+      ...config,
+      serviceStyles: { ...config.serviceStyles, [name]: 0 },
+    });
+  };
+
+  const removeServiceStyle = (key: string) => {
+    if (!config) return;
+    const { [key]: _removed, ...rest } = config.serviceStyles;
+    void _removed;
+    setConfig({ ...config, serviceStyles: rest });
+  };
+
+  const renameServiceStyle = (oldKey: string, newKey: string) => {
+    if (!config || oldKey === newKey) return;
+    const entries = Object.entries(config.serviceStyles);
+    const newEntries = entries.map(([k, v]) =>
+      k === oldKey ? [newKey, v] : [k, v]
+    );
+    setConfig({
+      ...config,
+      serviceStyles: Object.fromEntries(newEntries),
     });
   };
 
@@ -106,47 +177,124 @@ export default function PricingTab() {
     );
   }
 
+  const pq = searchQuery.toLowerCase().trim();
+  const filteredEventTypes = Object.entries(config.eventTypes).filter(
+    ([key]) => !pq || key.toLowerCase().includes(pq)
+  );
+  const filteredServiceStyles = Object.entries(config.serviceStyles).filter(
+    ([key]) => !pq || key.toLowerCase().includes(pq)
+  );
+  const filteredAddOns = config.addOns
+    .map((addOn, index) => ({ addOn, index }))
+    .filter(
+      ({ addOn }) =>
+        !pq ||
+        addOn.name.toLowerCase().includes(pq) ||
+        addOn.description.toLowerCase().includes(pq)
+    );
+
   return (
     <div>
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted/50"
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search event types, service styles, add-ons..."
+          className={cn(inputClass, "pl-10")}
+        />
+      </div>
+
       {/* Event Types */}
+      {filteredEventTypes.length > 0 && (
       <section className="mb-10">
-        <h2 className="text-primary text-xs font-bold tracking-[0.15em] uppercase mb-4">
-          Event Type Base Prices
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-primary text-xs font-bold tracking-[0.15em] uppercase">
+            Event Type Base Prices
+          </h2>
+          <button
+            onClick={addEventType}
+            className="flex items-center gap-1.5 text-primary text-xs font-bold hover:text-primary-dark transition-colors"
+          >
+            <Plus size={14} /> Add Event Type
+          </button>
+        </div>
         <div className="space-y-3">
-          {Object.entries(config.eventTypes).map(([key, value]) => (
-            <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <span className="flex-1 text-sm text-slate-text">{key}</span>
-              <div className="relative w-full sm:w-32">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted text-sm">
-                  $
-                </span>
-                <input
-                  type="number"
-                  value={value}
-                  onChange={(e) =>
-                    updateEventType(key, parseFloat(e.target.value) || 0)
-                  }
-                  className={cn(inputClass, "pl-7 w-full sm:w-32")}
-                />
+          {filteredEventTypes.map(([key, value]) => {
+            const isSpecialty = SPECIALTY_NAMES.has(key);
+            return (
+              <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                {isSpecialty ? (
+                  <span className="flex-1 text-sm text-slate-text">{key}</span>
+                ) : (
+                  <input
+                    type="text"
+                    value={key}
+                    onChange={(e) => renameEventType(key, e.target.value)}
+                    className={cn(inputClass, "flex-1")}
+                    placeholder="Event type name"
+                  />
+                )}
+                <div className="relative w-full sm:w-32">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted text-sm">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    value={value}
+                    onChange={(e) =>
+                      updateEventType(key, parseFloat(e.target.value) || 0)
+                    }
+                    className={cn(inputClass, "pl-7 w-full sm:w-32")}
+                  />
+                </div>
+                {!isSpecialty && (
+                  <button
+                    onClick={() => removeEventType(key)}
+                    className="p-2 -m-1 text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
+      )}
 
       {/* Service Styles */}
+      {filteredServiceStyles.length > 0 && (
       <section className="mb-10">
-        <h2 className="text-primary text-xs font-bold tracking-[0.15em] uppercase mb-4">
-          Service Style Modifiers
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-primary text-xs font-bold tracking-[0.15em] uppercase">
+            Service Style Modifiers
+          </h2>
+          <button
+            onClick={addServiceStyle}
+            className="flex items-center gap-1.5 text-primary text-xs font-bold hover:text-primary-dark transition-colors"
+          >
+            <Plus size={14} /> Add Service Style
+          </button>
+        </div>
         <p className="text-slate-muted/60 text-xs mb-4">
           Positive values add to the base price, negative values subtract.
         </p>
         <div className="space-y-3">
-          {Object.entries(config.serviceStyles).map(([key, value]) => (
+          {filteredServiceStyles.map(([key, value]) => (
             <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <span className="flex-1 text-sm text-slate-text">{key}</span>
+              <input
+                type="text"
+                value={key}
+                onChange={(e) => renameServiceStyle(key, e.target.value)}
+                className={cn(inputClass, "flex-1")}
+                placeholder="Service style name"
+              />
               <div className="relative w-full sm:w-32">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted text-sm">
                   $
@@ -160,12 +308,20 @@ export default function PricingTab() {
                   className={cn(inputClass, "pl-7 w-full sm:w-32")}
                 />
               </div>
+              <button
+                onClick={() => removeServiceStyle(key)}
+                className="p-2 -m-1 text-red-400 hover:text-red-600 transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           ))}
         </div>
       </section>
+      )}
 
       {/* Per-Person Rate */}
+      {!pq && (
       <section className="mb-10">
         <h2 className="text-primary text-xs font-bold tracking-[0.15em] uppercase mb-4">
           Per-Person Rate
@@ -190,8 +346,10 @@ export default function PricingTab() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Add-Ons */}
+      {filteredAddOns.length > 0 && (
       <section className="mb-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-primary text-xs font-bold tracking-[0.15em] uppercase">
@@ -205,7 +363,7 @@ export default function PricingTab() {
           </button>
         </div>
         <div className="space-y-4">
-          {config.addOns.map((addOn, index) => (
+          {filteredAddOns.map(({ addOn, index }) => (
             <div
               key={addOn.id}
               className="border border-sky-deep rounded-sm p-5 space-y-4"
@@ -287,6 +445,7 @@ export default function PricingTab() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Save */}
       <div className="sticky bottom-0 bg-white border-t border-sky-deep py-4 -mx-4 px-4 md:-mx-6 md:px-6">

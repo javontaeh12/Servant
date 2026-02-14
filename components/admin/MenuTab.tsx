@@ -11,6 +11,7 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MenuConfig, MenuCategory, MenuItem, PresetMeal } from "@/lib/types";
@@ -28,6 +29,8 @@ export default function MenuTab() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>(
     { categories: false, items: false, presets: false }
@@ -349,7 +352,7 @@ export default function MenuTab() {
           )}
         >
           <div className="overflow-hidden">
-            <div className="px-3 pb-3 space-y-3">
+            <div className="px-3 pb-3 space-y-5">
               {catItems.map(({ item, index }) => renderItemCard(item, index))}
             </div>
           </div>
@@ -362,7 +365,7 @@ export default function MenuTab() {
   const renderItemCard = (item: MenuItem, index: number) => (
     <div
       key={item.id}
-      className="border border-sky-deep rounded-sm p-4 space-y-3"
+      className="border border-sky-deep rounded-sm p-5 space-y-4 bg-white shadow-sm"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -448,17 +451,56 @@ export default function MenuTab() {
     </div>
   );
 
+  const q = searchQuery.toLowerCase().trim();
+
+  const matchedItems = q
+    ? config.items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.description.toLowerCase().includes(q)
+      )
+    : config.items;
+
+  const matchedPresets = q
+    ? config.presetMeals.filter(
+        (pm) =>
+          pm.name.toLowerCase().includes(q) ||
+          pm.description.toLowerCase().includes(q)
+      )
+    : config.presetMeals;
+
+  const matchedCategories = q
+    ? config.categories.filter((cat) => cat.name.toLowerCase().includes(q))
+    : config.categories;
+
   return (
     <div>
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted/50"
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search categories, items, or presets..."
+          className={cn(inputClass, "pl-10")}
+        />
+      </div>
+
       {/* Categories Section */}
       {renderSection(
         "categories",
         "Categories",
-        config.categories.length,
+        matchedCategories.length,
         addCategory,
         "Add Category",
         <div className="space-y-2">
-          {sortedCategories.map((cat, displayIndex) => {
+          {sortedCategories
+            .filter((cat) => matchedCategories.some((mc) => mc.id === cat.id))
+            .map((cat, displayIndex) => {
             const realIndex = config.categories.findIndex(
               (c) => c.id === cat.id
             );
@@ -508,19 +550,19 @@ export default function MenuTab() {
       {renderSection(
         "items",
         "Menu Items",
-        config.items.length,
+        matchedItems.length,
         addItem,
         "Add Item",
         <>
           {sortedCategories.map((cat) => {
-            const catItems = config.items
-              .map((item, index) => ({ item, index }))
+            const catItems = matchedItems
+              .map((item) => ({ item, index: config.items.findIndex((i) => i.id === item.id) }))
               .filter(({ item }) => item.categoryId === cat.id);
             if (catItems.length === 0) return null;
             return renderCategoryGroup(cat, catItems);
           })}
           {/* Uncategorized items */}
-          {config.items.filter(
+          {matchedItems.filter(
             (item) =>
               !config.categories.some((c) => c.id === item.categoryId)
           ).length > 0 && (
@@ -529,8 +571,8 @@ export default function MenuTab() {
                 Uncategorized
               </h3>
               <div className="space-y-3">
-                {config.items
-                  .map((item, index) => ({ item, index }))
+                {matchedItems
+                  .map((item) => ({ item, index: config.items.findIndex((i) => i.id === item.id) }))
                   .filter(
                     ({ item }) =>
                       !config.categories.some(
@@ -548,11 +590,13 @@ export default function MenuTab() {
       {renderSection(
         "presets",
         "Preset Meals",
-        config.presetMeals.length,
+        matchedPresets.length,
         addPresetMeal,
         "Add Preset",
         <div className="space-y-4">
-          {config.presetMeals.map((preset, index) => (
+          {matchedPresets.map((preset) => {
+            const index = config.presetMeals.findIndex((pm) => pm.id === preset.id);
+            return (
             <div
               key={preset.id}
               className="border border-sky-deep rounded-sm p-5 space-y-4"
@@ -667,7 +711,8 @@ export default function MenuTab() {
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
 

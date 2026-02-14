@@ -1,8 +1,43 @@
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import ContactForm from "@/components/contact/ContactForm";
-import { BUSINESS } from "@/lib/constants";
+import { readBusiness } from "@/lib/business-storage";
 
-export default function ContactPage() {
+// TikTok icon
+function TikTokIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+    </svg>
+  );
+}
+
+const SOCIAL_ICONS: Record<string, { icon: React.ElementType; label: string }> = {
+  facebook: { icon: Facebook, label: "Facebook" },
+  instagram: { icon: Instagram, label: "Instagram" },
+  twitter: { icon: Twitter, label: "X (Twitter)" },
+  tiktok: { icon: TikTokIcon, label: "TikTok" },
+  youtube: { icon: Youtube, label: "YouTube" },
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function ContactPage() {
+  const business = await readBusiness();
+
+  const activeSocials = Object.entries(business.socialLinks).filter(
+    ([, url]) => url && url.trim() !== ""
+  );
+
   return (
     <>
       {/* Page Hero */}
@@ -38,7 +73,7 @@ export default function ContactPage() {
 
             <div className="space-y-7">
               <a
-                href={`tel:${BUSINESS.phone}`}
+                href={`tel:${business.phone}`}
                 className="flex items-center gap-5 group"
               >
                 <div className="w-12 h-12 border border-sky-deep bg-sky flex items-center justify-center group-hover:border-primary/30 transition-colors rounded-sm">
@@ -53,13 +88,13 @@ export default function ContactPage() {
                     Phone
                   </p>
                   <p className="text-slate-text font-bold group-hover:text-primary transition-colors">
-                    {BUSINESS.phone}
+                    {business.phone}
                   </p>
                 </div>
               </a>
 
               <a
-                href={`mailto:${BUSINESS.email}`}
+                href={`mailto:${business.email}`}
                 className="flex items-center gap-5 group"
               >
                 <div className="w-12 h-12 border border-sky-deep bg-sky flex items-center justify-center group-hover:border-primary/30 transition-colors rounded-sm">
@@ -74,7 +109,7 @@ export default function ContactPage() {
                     Email
                   </p>
                   <p className="text-slate-text font-bold group-hover:text-primary transition-colors">
-                    {BUSINESS.email}
+                    {business.email}
                   </p>
                 </div>
               </a>
@@ -91,7 +126,7 @@ export default function ContactPage() {
                   <p className="text-slate-muted text-xs tracking-wide uppercase mb-1">
                     Location
                   </p>
-                  <p className="text-slate-text font-bold">{BUSINESS.address}</p>
+                  <p className="text-slate-text font-bold">{business.address}</p>
                 </div>
               </div>
 
@@ -108,14 +143,46 @@ export default function ContactPage() {
                     Hours
                   </p>
                   <p className="text-slate-text font-bold text-sm">
-                    {BUSINESS.hours.weekdays}
+                    {business.hours.weekdays}
                   </p>
                   <p className="text-slate-muted text-sm">
-                    {BUSINESS.hours.weekends}
+                    {business.hours.weekends}
                   </p>
                 </div>
               </div>
             </div>
+
+            {/* Social Links */}
+            {activeSocials.length > 0 && (
+              <div className="mt-10 pt-8 border-t border-sky-deep">
+                <p className="text-slate-muted text-xs tracking-wide uppercase mb-4">
+                  Follow Us
+                </p>
+                <div className="flex gap-3">
+                  {activeSocials.map(([key, url]) => {
+                    const social = SOCIAL_ICONS[key];
+                    if (!social) return null;
+                    const Icon = social.icon;
+                    return (
+                      <a
+                        key={key}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={social.label}
+                        className="w-11 h-11 border border-sky-deep bg-sky flex items-center justify-center hover:border-primary/30 hover:bg-primary/5 transition-all rounded-sm"
+                      >
+                        <Icon
+                          className="text-primary"
+                          size={18}
+                          strokeWidth={1.5}
+                        />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Contact Form */}

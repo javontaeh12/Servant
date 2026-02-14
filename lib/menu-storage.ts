@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { MenuConfig } from "./types";
+import { withFileLock } from "./file-lock";
 
 const MENU_FILE = path.join(process.cwd(), "data", "menu.json");
 
@@ -10,5 +11,7 @@ export async function readMenu(): Promise<MenuConfig> {
 }
 
 export async function writeMenu(config: MenuConfig): Promise<void> {
-  await fs.writeFile(MENU_FILE, JSON.stringify(config, null, 2), "utf-8");
+  await withFileLock(MENU_FILE, () =>
+    fs.writeFile(MENU_FILE, JSON.stringify(config, null, 2), "utf-8")
+  );
 }

@@ -6,6 +6,11 @@ import {
   PartyPopper,
   Church,
   HandHeart,
+  Cake,
+  Users,
+  Gift,
+  GraduationCap,
+  School,
   Check,
 } from "lucide-react";
 import { SERVICES } from "@/lib/constants";
@@ -17,6 +22,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   PartyPopper,
   Church,
   HandHeart,
+  Cake,
+  Users,
+  Gift,
+  GraduationCap,
+  School,
 };
 
 export default function ServicesPage() {
@@ -26,10 +36,10 @@ export default function ServicesPage() {
       <section className="relative pt-36 pb-20 md:pt-44 md:pb-28 px-6 sm:px-8 bg-sky">
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <p className="animate-fade-in text-primary text-xs tracking-[0.35em] uppercase mb-5">
-            What We Offer
+            Our Specialties
           </p>
           <h1 className="animate-fade-up-delay-1 font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-slate-text">
-            Our Services
+            Our Specialties
           </h1>
           <div className="animate-line-grow h-[2px] bg-primary mx-auto mt-6" style={{ animationDelay: "0.3s" }} />
         </div>

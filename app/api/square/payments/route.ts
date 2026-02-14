@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const squareClient = await getSquareClient();
     const page = await squareClient.payments.list({
       locationId: SQUARE_LOCATION_ID,
+      sortField: "CREATED_AT",
       sortOrder: "DESC",
     });
 

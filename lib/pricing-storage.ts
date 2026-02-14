@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { PricingConfig } from "./types";
+import { withFileLock } from "./file-lock";
 
 const PRICING_FILE = path.join(process.cwd(), "data", "pricing.json");
 
@@ -10,5 +11,7 @@ export async function readPricing(): Promise<PricingConfig> {
 }
 
 export async function writePricing(config: PricingConfig): Promise<void> {
-  await fs.writeFile(PRICING_FILE, JSON.stringify(config, null, 2), "utf-8");
+  await withFileLock(PRICING_FILE, () =>
+    fs.writeFile(PRICING_FILE, JSON.stringify(config, null, 2), "utf-8")
+  );
 }

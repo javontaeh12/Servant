@@ -4,9 +4,24 @@ import { readPricing } from "@/lib/pricing-storage";
 import { readMenu } from "@/lib/menu-storage";
 import { calculateEstimate } from "@/lib/pricing";
 import { MealSelection } from "@/lib/types";
+import { sendEmail } from "@/lib/gmail";
+import { adminNewBookingEmail } from "@/lib/email-templates";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 requests per minute per IP
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    if (!checkRateLimit(`create-event:${ip}`, 5, 60000)) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -95,6 +110,26 @@ export async function POST(request: NextRequest) {
       estimate,
       pricing,
     });
+
+    // Send admin notification email (non-blocking)
+    try {
+      const adminEmail = process.env.ALLOWED_ADMIN_EMAILS?.split(",")[0]?.trim();
+      if (adminEmail) {
+        const { subject, html } = adminNewBookingEmail({
+          clientName: name,
+          clientEmail: email,
+          clientPhone: phone || "N/A",
+          eventType,
+          eventDate: eventDate || "TBD",
+          guestCount: Number(guestCount || 0),
+          estimatedTotal: estimate?.total ?? 0,
+        });
+        await sendEmail(adminEmail, subject, html);
+      }
+    } catch (emailError) {
+      console.error("Failed to send admin notification email:", emailError);
+      // Don't fail the booking if email fails
+    }
 
     return NextResponse.json({
       success: true,
