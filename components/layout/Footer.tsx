@@ -112,14 +112,14 @@ export default async function Footer() {
             <div className="flex flex-col gap-4">
               <a
                 href={`tel:${business.phone}`}
-                className="flex items-center gap-3 text-white/50 hover:text-primary-light transition-colors text-sm"
+                className="flex items-center gap-3 text-primary-light hover:text-white transition-colors text-sm underline underline-offset-2"
               >
                 <Phone size={14} className="text-primary-light flex-shrink-0" />
                 {business.phone}
               </a>
               <a
                 href={`mailto:${business.email}`}
-                className="flex items-center gap-3 text-white/50 hover:text-primary-light transition-colors text-sm"
+                className="flex items-center gap-3 text-primary-light hover:text-white transition-colors text-sm underline underline-offset-2"
               >
                 <Mail size={14} className="text-primary-light flex-shrink-0" />
                 {business.email}

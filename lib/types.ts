@@ -49,9 +49,14 @@ export interface AddOn {
   price: number;
 }
 
+export interface PricingEntry {
+  price: number;
+  pricingType: "flat" | "per-person";
+}
+
 export interface PricingConfig {
-  eventTypes: Record<string, number>;
-  serviceStyles: Record<string, number>;
+  eventTypes: Record<string, PricingEntry>;
+  serviceStyles: Record<string, PricingEntry>;
   perPersonRate: number;
   addOns: AddOn[];
 }
@@ -141,6 +146,18 @@ export interface CalendarBooking {
   estimatedTotal: number | null;
   invoiceId: string | null;
   invoiceUrl: string | null;
+}
+
+// Gallery
+export interface GalleryImage {
+  id: string;
+  src: string;
+  caption: string;
+  sortOrder: number;
+}
+
+export interface GalleryConfig {
+  images: GalleryImage[];
 }
 
 // Square

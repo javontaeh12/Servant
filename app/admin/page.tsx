@@ -14,6 +14,7 @@ import {
   Link as LinkIcon,
   Home,
   Building2,
+  Images,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ import PaymentsTab from "@/components/admin/PaymentsTab";
 import MenuTab from "@/components/admin/MenuTab";
 import PricingTab from "@/components/admin/PricingTab";
 import BusinessTab from "@/components/admin/BusinessTab";
+import GalleryTab from "@/components/admin/GalleryTab";
 import { Suspense } from "react";
 
 const TABS = [
@@ -30,6 +32,7 @@ const TABS = [
   { id: "menu", label: "Menu", icon: UtensilsCrossed },
   { id: "pricing", label: "Pricing", icon: Settings },
   { id: "business", label: "Business", icon: Building2 },
+  { id: "gallery", label: "Gallery", icon: Images },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -153,6 +156,7 @@ function AdminContent() {
         {activeTab === "menu" && <MenuTab />}
         {activeTab === "pricing" && <PricingTab />}
         {activeTab === "business" && <BusinessTab />}
+        {activeTab === "gallery" && <GalleryTab />}
       </div>
     </div>
   );

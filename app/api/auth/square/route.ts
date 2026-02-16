@@ -4,10 +4,11 @@ import crypto from "crypto";
 
 export async function GET(request: NextRequest) {
   // Must be logged in first
+  const appBaseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
   const session = await getSessionFromRequest(request);
   if (!session) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/login`
+      `${appBaseUrl}/login`
     );
   }
 

@@ -3,11 +3,12 @@ import { getSessionFromRequest } from "@/lib/session";
 import { saveCredentials } from "@/lib/credentials";
 
 export async function GET(request: NextRequest) {
+  const appBaseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
   // Must be logged in
   const session = await getSessionFromRequest(request);
   if (!session) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/login`
+      `${appBaseUrl}/login`
     );
   }
 
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   if (!code || !state || state !== storedState) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/admin?square=error&reason=invalid_state`
+      `${appBaseUrl}/admin?square=error&reason=invalid_state`
     );
   }
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok || !tokenData.access_token) {
       console.error("Square token exchange failed:", tokenData);
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/admin?square=error&reason=token_exchange`
+        `${appBaseUrl}/admin?square=error&reason=token_exchange`
       );
     }
 
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     // Clear the state cookie
     const response = NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/admin?square=connected`
+      `${appBaseUrl}/admin?square=connected`
     );
     response.cookies.set("square_oauth_state", "", {
       maxAge: 0,
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Square OAuth callback error:", error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/admin?square=error`
+      `${appBaseUrl}/admin?square=error`
     );
   }
 }

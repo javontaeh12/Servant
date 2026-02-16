@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Save,
   Loader2,
@@ -11,7 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PricingConfig, AddOn } from "@/lib/types";
+import { PricingConfig, AddOn, PricingEntry } from "@/lib/types";
 import { SERVICES } from "@/lib/constants";
 
 // Specialty names derived from SERVICES — these are locked (no rename/delete)
@@ -22,6 +22,8 @@ const inputClass =
 const labelClass =
   "block text-slate-muted text-xs font-bold tracking-wide uppercase mb-2";
 
+const DEFAULT_ENTRY: PricingEntry = { price: 0, pricingType: "flat" };
+
 export default function PricingTab() {
   const [config, setConfig] = useState<PricingConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,12 @@ export default function PricingTab() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Refs for scroll-to-new-item
+  const newEventTypeRef = useRef<HTMLDivElement | null>(null);
+  const newServiceStyleRef = useRef<HTMLDivElement | null>(null);
+  const scrollToNewEventType = useRef(false);
+  const scrollToNewServiceStyle = useRef(false);
 
   useEffect(() => {
     fetch("/api/pricing")
@@ -38,7 +46,7 @@ export default function PricingTab() {
         const merged = { ...data.eventTypes };
         for (const name of SPECIALTY_NAMES) {
           if (!(name in merged)) {
-            merged[name] = 0;
+            merged[name] = DEFAULT_ENTRY;
           }
         }
         setConfig({ ...data, eventTypes: merged });
@@ -46,6 +54,21 @@ export default function PricingTab() {
       .catch(() => setSaveError("Failed to load pricing config"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Scroll to newly added items after render
+  useEffect(() => {
+    if (scrollToNewEventType.current && newEventTypeRef.current) {
+      newEventTypeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrollToNewEventType.current = false;
+    }
+  });
+
+  useEffect(() => {
+    if (scrollToNewServiceStyle.current && newServiceStyleRef.current) {
+      newServiceStyleRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrollToNewServiceStyle.current = false;
+    }
+  });
 
   const handleSave = async () => {
     if (!config) return;
@@ -72,20 +95,25 @@ export default function PricingTab() {
     }
   };
 
-  const updateEventType = (key: string, value: number) => {
+  const updateEventType = (key: string, field: keyof PricingEntry, value: number | string) => {
     if (!config) return;
+    const current = config.eventTypes[key] ?? DEFAULT_ENTRY;
     setConfig({
       ...config,
-      eventTypes: { ...config.eventTypes, [key]: value },
+      eventTypes: {
+        ...config.eventTypes,
+        [key]: { ...current, [field]: value },
+      },
     });
   };
 
   const addEventType = () => {
     if (!config) return;
     const name = `New Event Type`;
+    scrollToNewEventType.current = true;
     setConfig({
       ...config,
-      eventTypes: { ...config.eventTypes, [name]: 0 },
+      eventTypes: { ...config.eventTypes, [name]: { ...DEFAULT_ENTRY } },
     });
   };
 
@@ -108,20 +136,25 @@ export default function PricingTab() {
     });
   };
 
-  const updateServiceStyle = (key: string, value: number) => {
+  const updateServiceStyle = (key: string, field: keyof PricingEntry, value: number | string) => {
     if (!config) return;
+    const current = config.serviceStyles[key] ?? DEFAULT_ENTRY;
     setConfig({
       ...config,
-      serviceStyles: { ...config.serviceStyles, [key]: value },
+      serviceStyles: {
+        ...config.serviceStyles,
+        [key]: { ...current, [field]: value },
+      },
     });
   };
 
   const addServiceStyle = () => {
     if (!config) return;
     const name = `New Service Style`;
+    scrollToNewServiceStyle.current = true;
     setConfig({
       ...config,
-      serviceStyles: { ...config.serviceStyles, [name]: 0 },
+      serviceStyles: { ...config.serviceStyles, [name]: { ...DEFAULT_ENTRY } },
     });
   };
 
@@ -193,6 +226,12 @@ export default function PricingTab() {
         addOn.description.toLowerCase().includes(pq)
     );
 
+  const eventTypeKeys = filteredEventTypes.map(([key]) => key);
+  const lastEventTypeKey = eventTypeKeys[eventTypeKeys.length - 1];
+
+  const serviceStyleKeys = filteredServiceStyles.map(([key]) => key);
+  const lastServiceStyleKey = serviceStyleKeys[serviceStyleKeys.length - 1];
+
   return (
     <div>
       {/* Search */}
@@ -225,10 +264,15 @@ export default function PricingTab() {
           </button>
         </div>
         <div className="space-y-3">
-          {filteredEventTypes.map(([key, value]) => {
+          {filteredEventTypes.map(([key, entry]) => {
             const isSpecialty = SPECIALTY_NAMES.has(key);
+            const isLast = key === lastEventTypeKey;
             return (
-              <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div
+                key={key}
+                ref={isLast ? newEventTypeRef : undefined}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
+              >
                 {isSpecialty ? (
                   <span className="flex-1 text-sm text-slate-text">{key}</span>
                 ) : (
@@ -240,15 +284,25 @@ export default function PricingTab() {
                     placeholder="Event type name"
                   />
                 )}
+                <select
+                  value={entry.pricingType}
+                  onChange={(e) =>
+                    updateEventType(key, "pricingType", e.target.value as "flat" | "per-person")
+                  }
+                  className={cn(inputClass, "appearance-none w-full sm:w-36")}
+                >
+                  <option value="flat">Flat Rate</option>
+                  <option value="per-person">Per Person</option>
+                </select>
                 <div className="relative w-full sm:w-32">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted text-sm">
                     $
                   </span>
                   <input
                     type="number"
-                    value={value}
+                    value={entry.price}
                     onChange={(e) =>
-                      updateEventType(key, parseFloat(e.target.value) || 0)
+                      updateEventType(key, "price", parseFloat(e.target.value) || 0)
                     }
                     className={cn(inputClass, "pl-7 w-full sm:w-32")}
                   />
@@ -286,36 +340,53 @@ export default function PricingTab() {
           Positive values add to the base price, negative values subtract.
         </p>
         <div className="space-y-3">
-          {filteredServiceStyles.map(([key, value]) => (
-            <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <input
-                type="text"
-                value={key}
-                onChange={(e) => renameServiceStyle(key, e.target.value)}
-                className={cn(inputClass, "flex-1")}
-                placeholder="Service style name"
-              />
-              <div className="relative w-full sm:w-32">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted text-sm">
-                  $
-                </span>
-                <input
-                  type="number"
-                  value={value}
-                  onChange={(e) =>
-                    updateServiceStyle(key, parseFloat(e.target.value) || 0)
-                  }
-                  className={cn(inputClass, "pl-7 w-full sm:w-32")}
-                />
-              </div>
-              <button
-                onClick={() => removeServiceStyle(key)}
-                className="p-2 -m-1 text-red-400 hover:text-red-600 transition-colors"
+          {filteredServiceStyles.map(([key, entry]) => {
+            const isLast = key === lastServiceStyleKey;
+            return (
+              <div
+                key={key}
+                ref={isLast ? newServiceStyleRef : undefined}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
               >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
+                <input
+                  type="text"
+                  value={key}
+                  onChange={(e) => renameServiceStyle(key, e.target.value)}
+                  className={cn(inputClass, "flex-1")}
+                  placeholder="Service style name"
+                />
+                <select
+                  value={entry.pricingType}
+                  onChange={(e) =>
+                    updateServiceStyle(key, "pricingType", e.target.value as "flat" | "per-person")
+                  }
+                  className={cn(inputClass, "appearance-none w-full sm:w-36")}
+                >
+                  <option value="flat">Flat Rate</option>
+                  <option value="per-person">Per Person</option>
+                </select>
+                <div className="relative w-full sm:w-32">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-muted text-sm">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    value={entry.price}
+                    onChange={(e) =>
+                      updateServiceStyle(key, "price", parseFloat(e.target.value) || 0)
+                    }
+                    className={cn(inputClass, "pl-7 w-full sm:w-32")}
+                  />
+                </div>
+                <button
+                  onClick={() => removeServiceStyle(key)}
+                  className="p-2 -m-1 text-red-400 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
       )}

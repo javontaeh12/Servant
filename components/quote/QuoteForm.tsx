@@ -15,7 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SERVICE_STYLES } from "@/lib/constants";
+// SERVICE_STYLES removed — now loaded dynamically from pricing config
 import {
   PricingConfig,
   QuoteEstimate,
@@ -82,6 +82,10 @@ export default function QuoteForm() {
   const [pricing, setPricing] = useState<PricingConfig | null>(null);
   const [menuConfig, setMenuConfig] = useState<MenuConfig | null>(null);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<
+    { start: string; end: string; label: string }[]
+  >([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/pricing")
@@ -120,8 +124,22 @@ export default function QuoteForm() {
     }));
   }, []);
 
-  const handleDateChange = (date: string) => {
-    update("eventDate", date);
+  const handleDateChange = async (date: string) => {
+    setForm((prev) => ({ ...prev, eventDate: date, eventTime: "" }));
+    setAvailableSlots([]);
+
+    if (!date) return;
+
+    setSlotsLoading(true);
+    try {
+      const res = await fetch(`/api/calendar/available-slots?date=${date}`);
+      const data = await res.json();
+      setAvailableSlots(data.slots || []);
+    } catch {
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
   };
 
   const goToStep = (newStep: number) => {
@@ -358,11 +376,12 @@ export default function QuoteForm() {
                 className={selectClass}
               >
                 <option value="">Select service style...</option>
-                {SERVICE_STYLES.map((style) => (
-                  <option key={style} value={style}>
-                    {style}
-                  </option>
-                ))}
+                {pricing &&
+                  Object.keys(pricing.serviceStyles).map((style) => (
+                    <option key={style} value={style}>
+                      {style}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
@@ -657,18 +676,48 @@ export default function QuoteForm() {
                 className={inputClass}
               />
             </div>
-            <div>
-              <label className={labelClass}>
-                <Clock size={12} className="inline mr-1.5 -mt-0.5" />
-                Preferred Time *
-              </label>
-              <input
-                type="time"
-                value={form.eventTime}
-                onChange={(e) => update("eventTime", e.target.value)}
-                className={inputClass}
-              />
-            </div>
+            {form.eventDate && (
+              <div>
+                <label className={labelClass}>
+                  <Clock size={12} className="inline mr-1.5 -mt-0.5" />
+                  Available Times *
+                </label>
+                {slotsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2
+                      className="animate-spin text-primary"
+                      size={24}
+                    />
+                    <span className="ml-2 text-slate-muted text-sm">
+                      Loading available times...
+                    </span>
+                  </div>
+                ) : availableSlots.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableSlots.map((slot) => (
+                      <button
+                        key={slot.start}
+                        type="button"
+                        onClick={() => update("eventTime", slot.start)}
+                        className={cn(
+                          "p-3 border rounded-sm text-sm font-medium transition-all text-center",
+                          form.eventTime === slot.start
+                            ? "border-primary bg-primary/5 text-primary font-bold"
+                            : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
+                        )}
+                      >
+                        {slot.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-muted text-sm text-center py-6">
+                    No available times for this date. Please select a different
+                    date.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -838,7 +887,10 @@ export default function QuoteForm() {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-slate-muted">
-                      {form.eventType} (base)
+                      {form.eventType}{" "}
+                      {pricing?.eventTypes[form.eventType]?.pricingType === "per-person"
+                        ? "(per person)"
+                        : "(flat)"}
                     </span>
                     <span className="text-slate-text">
                       {formatCurrency(estimate.eventTypePrice)}
@@ -847,7 +899,10 @@ export default function QuoteForm() {
                   {estimate.serviceStylePrice !== 0 && (
                     <div className="flex justify-between">
                       <span className="text-slate-muted">
-                        {form.serviceType}
+                        {form.serviceType}{" "}
+                        {pricing?.serviceStyles[form.serviceType]?.pricingType === "per-person"
+                          ? "(per person)"
+                          : "(flat)"}
                       </span>
                       <span className="text-slate-text">
                         {estimate.serviceStylePrice > 0 ? "+" : ""}
@@ -981,7 +1036,10 @@ export default function QuoteForm() {
               <div className="pb-4 border-t border-sky-deep pt-3 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-muted">
-                    {form.eventType} (base)
+                    {form.eventType}{" "}
+                    {pricing?.eventTypes[form.eventType]?.pricingType === "per-person"
+                      ? "(per person)"
+                      : "(flat)"}
                   </span>
                   <span className="text-slate-text">
                     {formatCurrency(estimate.eventTypePrice)}
@@ -989,7 +1047,12 @@ export default function QuoteForm() {
                 </div>
                 {estimate.serviceStylePrice !== 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-muted">{form.serviceType}</span>
+                    <span className="text-slate-muted">
+                      {form.serviceType}{" "}
+                      {pricing?.serviceStyles[form.serviceType]?.pricingType === "per-person"
+                        ? "(per person)"
+                        : "(flat)"}
+                    </span>
                     <span className="text-slate-text">
                       {estimate.serviceStylePrice > 0 ? "+" : ""}
                       {formatCurrency(estimate.serviceStylePrice)}

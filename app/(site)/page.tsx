@@ -4,7 +4,7 @@ import CateringAddOns from "@/components/home/CateringAddOns";
 import ServiceArea from "@/components/home/ServiceArea";
 import PopularMenus from "@/components/home/PopularMenus";
 import TestimonialSection from "@/components/home/TestimonialSection";
-import CTABanner from "@/components/home/CTABanner";
+import GallerySection from "@/components/home/GallerySection";
 
 export default function Home() {
   return (
@@ -15,7 +15,7 @@ export default function Home() {
       <PopularMenus />
       <ServiceArea />
       <TestimonialSection />
-      <CTABanner />
+      <GallerySection />
     </>
   );
 }

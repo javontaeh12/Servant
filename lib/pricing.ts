@@ -9,8 +9,18 @@ export function calculateEstimate(
   mealSelection?: MealSelection,
   menuConfig?: MenuConfig
 ): QuoteEstimate {
-  const eventTypePrice = config.eventTypes[eventType] ?? 0;
-  const serviceStylePrice = config.serviceStyles[serviceStyle] ?? 0;
+  const eventTypeEntry = config.eventTypes[eventType];
+  const eventTypePrice = eventTypeEntry
+    ? eventTypeEntry.pricingType === "per-person"
+      ? eventTypeEntry.price * guestCount
+      : eventTypeEntry.price
+    : 0;
+  const serviceStyleEntry = config.serviceStyles[serviceStyle];
+  const serviceStylePrice = serviceStyleEntry
+    ? serviceStyleEntry.pricingType === "per-person"
+      ? serviceStyleEntry.price * guestCount
+      : serviceStyleEntry.price
+    : 0;
   const perPersonTotal = config.perPersonRate * guestCount;
 
   const addOnBreakdown = selectedAddOnIds

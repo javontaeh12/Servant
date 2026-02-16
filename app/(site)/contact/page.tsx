@@ -87,7 +87,7 @@ export default async function ContactPage() {
                   <p className="text-slate-muted text-xs tracking-wide uppercase mb-1">
                     Phone
                   </p>
-                  <p className="text-slate-text font-bold group-hover:text-primary transition-colors">
+                  <p className="text-primary font-bold group-hover:text-primary-dark transition-colors underline underline-offset-2">
                     {business.phone}
                   </p>
                 </div>
@@ -108,7 +108,7 @@ export default async function ContactPage() {
                   <p className="text-slate-muted text-xs tracking-wide uppercase mb-1">
                     Email
                   </p>
-                  <p className="text-slate-text font-bold group-hover:text-primary transition-colors">
+                  <p className="text-primary font-bold group-hover:text-primary-dark transition-colors underline underline-offset-2">
                     {business.email}
                   </p>
                 </div>

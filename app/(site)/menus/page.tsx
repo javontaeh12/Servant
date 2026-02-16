@@ -101,7 +101,7 @@ export default function MenusPage() {
                         strokeWidth={1.5}
                       />
                       <span className="text-primary text-xs font-bold tracking-[0.2em] uppercase">
-                        Popular Menu
+                        Popular Menus
                       </span>
                     </div>
 

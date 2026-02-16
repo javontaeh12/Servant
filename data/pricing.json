@@ -1,26 +1,87 @@
 {
   "eventTypes": {
-    "Wedding Receptions": 0,
-    "Corporate Events": 0,
-    "Private Dinner Parties": 0,
-    "Holiday & Seasonal Events": 0,
-    "Church & Community Events": 0,
-    "Funeral Repasts": 0,
-    "Birthday Parties": 0,
-    "Family Reunions": 0,
-    "Baby Showers & Bridal Showers": 0,
-    "Graduation Celebrations": 0,
-    "School Events": 0,
-    "Other": 0
+    "Wedding Receptions": {
+      "price": 0.01,
+      "pricingType": "per-person"
+    },
+    "Corporate Events": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Private Dinner Parties": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Holiday & Seasonal Events": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Church & Community Events": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Funeral Repasts": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Birthday Parties": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Family Reunions": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Baby Showers & Bridal Showers": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Graduation Celebrations": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "School Events": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Other": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "New Event Type": {
+      "price": 0,
+      "pricingType": "flat"
+    }
   },
   "serviceStyles": {
-    "Full Catering (Buffet)": 0,
-    "Plated Dinner Service": 0,
-    "Appetizers & Hors d'oeuvres": 0,
-    "Family-Style Service": 0,
-    "Dessert Bar": 0,
-    "Custom Package": 0,
-    "New Service Style": 0
+    "Full Catering (Buffet)": {
+      "price": 0.01,
+      "pricingType": "per-person"
+    },
+    "Plated Dinner Service": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Appetizers & Hors d'oeuvres": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Family-Style Service": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Dessert Bar": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "Custom Package": {
+      "price": 0,
+      "pricingType": "flat"
+    },
+    "New Service Style": {
+      "price": 0,
+      "pricingType": "flat"
+    }
   },
   "perPersonRate": 0,
   "addOns": [
@@ -29,7 +90,7 @@
       "name": "Beverage Service",
       "description": "Non-alcoholic drinks including sweet tea, lemonade, water, and coffee",
       "pricingType": "per-person",
-      "price": 0
+      "price": 0.001
     },
     {
       "id": "silverware",

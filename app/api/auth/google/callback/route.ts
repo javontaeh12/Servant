@@ -4,6 +4,7 @@ import { createSession, isAllowedEmail, COOKIE_NAME } from "@/lib/session";
 import { saveCredentials } from "@/lib/credentials";
 
 export async function GET(request: NextRequest) {
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const storedState = request.cookies.get("google_oauth_state")?.value;
@@ -11,13 +12,13 @@ export async function GET(request: NextRequest) {
   // CSRF validation
   if (!state || state !== storedState) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/login?error=invalid_state`
+      `${baseUrl}/login?error=invalid_state`
     );
   }
 
   if (!code) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/login?error=no_code`
+      `${baseUrl}/login?error=no_code`
     );
   }
 
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/callback`
+      `${baseUrl}/api/auth/google/callback`
     );
 
     const { tokens } = await oauth2Client.getToken(code);
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     // Check if email is allowed
     if (!isAllowedEmail(email)) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/login?error=access_denied`
+        `${baseUrl}/login?error=access_denied`
       );
     }
 
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     // Set session cookie and redirect to admin
     const response = NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/admin`
+      `${baseUrl}/admin`
     );
     response.cookies.set(COOKIE_NAME, sessionToken, {
       httpOnly: true,
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Google OAuth callback error:", error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/login?error=auth_failed`
+      `${baseUrl}/login?error=auth_failed`
     );
   }
 }

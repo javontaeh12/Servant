@@ -35,28 +35,60 @@ export async function getGmailOAuth2Client() {
 }
 
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || "primary";
-const TIMEZONE = process.env.BUSINESS_TIMEZONE || "America/Chicago";
+const TIMEZONE = process.env.BUSINESS_TIMEZONE || "America/New_York";
 
 // Business hours: 9 AM to 7 PM, 1-hour slots
 const BUSINESS_START_HOUR = 9;
 const BUSINESS_END_HOUR = 19;
 const SLOT_DURATION_MINUTES = 60;
 
-export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
-  const dayStart = new Date(`${date}T0${BUSINESS_START_HOUR}:00:00`);
-  const dayEnd = new Date(`${date}T${BUSINESS_END_HOUR}:00:00`);
+/**
+ * Convert a date + time in a specific timezone to a UTC Date.
+ * e.g. dateInTimezone("2026-03-15", 9, 0, "America/New_York") → UTC Date for 9 AM Eastern
+ */
+function dateInTimezone(dateStr: string, hour: number, minute: number, timezone: string): Date {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const utcGuess = new Date(`${dateStr}T${pad(hour)}:${pad(minute)}:00.000Z`);
 
-  // Don't show slots for past dates
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+      .formatToParts(utcGuess)
+      .map(({ type, value }) => [type, value])
+  );
+
+  const tzHour = parseInt(parts.hour === "24" ? "0" : parts.hour);
+  const tzMinute = parseInt(parts.minute);
+  const tzDay = parseInt(parts.day);
+  const requestedDay = parseInt(dateStr.split("-")[2]);
+
+  let offsetMinutes = tzHour * 60 + tzMinute - (hour * 60 + minute);
+  if (tzDay > requestedDay) offsetMinutes += 24 * 60;
+  else if (tzDay < requestedDay) offsetMinutes -= 24 * 60;
+
+  return new Date(utcGuess.getTime() - offsetMinutes * 60000);
+}
+
+export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
+  const dayStartUTC = dateInTimezone(date, BUSINESS_START_HOUR, 0, TIMEZONE);
+  const dayEndUTC = dateInTimezone(date, BUSINESS_END_HOUR, 0, TIMEZONE);
+
   const now = new Date();
-  if (dayEnd < now) return [];
+  if (dayEndUTC < now) return [];
 
   try {
     const calendar = await getCalendarClient();
     const response = await calendar.freebusy.query({
       requestBody: {
-        timeMin: dayStart.toISOString(),
-        timeMax: dayEnd.toISOString(),
-        timeZone: TIMEZONE,
+        timeMin: dayStartUTC.toISOString(),
+        timeMax: dayEndUTC.toISOString(),
         items: [{ id: CALENDAR_ID }],
       },
     });
@@ -64,33 +96,26 @@ export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
     const busySlots =
       response.data.calendars?.[CALENDAR_ID]?.busy || [];
 
-    // Generate all possible slots within business hours
     const allSlots: TimeSlot[] = [];
-    const current = new Date(dayStart);
+    for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour++) {
+      const slotStart = dateInTimezone(date, hour, 0, TIMEZONE);
+      const slotEnd = dateInTimezone(date, hour + 1, 0, TIMEZONE);
 
-    while (current.getTime() + SLOT_DURATION_MINUTES * 60000 <= dayEnd.getTime()) {
-      const slotStart = new Date(current);
-      const slotEnd = new Date(current.getTime() + SLOT_DURATION_MINUTES * 60000);
+      if (slotStart <= now) continue;
 
-      // Skip slots that are in the past
-      if (slotStart > now) {
-        // Check if slot overlaps with any busy period
-        const isConflict = busySlots.some((busy) => {
-          const busyStart = new Date(busy.start!);
-          const busyEnd = new Date(busy.end!);
-          return slotStart < busyEnd && slotEnd > busyStart;
+      const isConflict = busySlots.some((busy) => {
+        const busyStart = new Date(busy.start!);
+        const busyEnd = new Date(busy.end!);
+        return slotStart < busyEnd && slotEnd > busyStart;
+      });
+
+      if (!isConflict) {
+        allSlots.push({
+          start: slotStart.toISOString(),
+          end: slotEnd.toISOString(),
+          label: `${formatTimeLabel(slotStart)} - ${formatTimeLabel(slotEnd)}`,
         });
-
-        if (!isConflict) {
-          allSlots.push({
-            start: slotStart.toISOString(),
-            end: slotEnd.toISOString(),
-            label: `${formatTimeLabel(slotStart)} - ${formatTimeLabel(slotEnd)}`,
-          });
-        }
       }
-
-      current.setMinutes(current.getMinutes() + SLOT_DURATION_MINUTES);
     }
 
     return allSlots;
@@ -155,7 +180,17 @@ export async function createBookingEvent(data: {
   estimate?: QuoteEstimate | null;
   pricing?: PricingConfig | null;
 }): Promise<{ eventId: string }> {
-  const startTime = new Date(data.eventTime);
+  let startTime: Date;
+  if (data.eventTime.includes("T")) {
+    // Full ISO datetime from slot picker
+    startTime = new Date(data.eventTime);
+  } else if (data.eventDate && data.eventTime) {
+    // Bare "HH:MM" fallback — interpret in business timezone
+    const [hours, minutes] = data.eventTime.split(":").map(Number);
+    startTime = dateInTimezone(data.eventDate, hours, minutes || 0, TIMEZONE);
+  } else {
+    startTime = new Date();
+  }
   const endTime = new Date(startTime.getTime() + 2 * 60 * 60000); // 2-hour block
 
   const pricingLines: string[] = [];
@@ -283,5 +318,6 @@ function formatTimeLabel(date: Date): string {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: TIMEZONE,
   });
 }

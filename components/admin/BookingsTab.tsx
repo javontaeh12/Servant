@@ -628,16 +628,24 @@ export default function BookingsTab() {
                           {formatTime(booking.start)} - {formatTime(booking.end)}
                         </span>
                         {(booking.clientEmail || parsed.email) && (
-                          <span className="flex items-center gap-1 truncate max-w-[200px]">
+                          <a
+                            href={`mailto:${booking.clientEmail || parsed.email}`}
+                            className="flex items-center gap-1 truncate max-w-[200px] text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Mail size={12} className="flex-shrink-0" />
                             <span className="truncate">{booking.clientEmail || parsed.email}</span>
-                          </span>
+                          </a>
                         )}
                         {(booking.clientPhone || parsed.phone) && (
-                          <span className="flex items-center gap-1">
+                          <a
+                            href={`tel:${booking.clientPhone || parsed.phone}`}
+                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Phone size={12} />
                             {booking.clientPhone || parsed.phone}
-                          </span>
+                          </a>
                         )}
                         {parsed["guest count"] && (
                           <span className="flex items-center gap-1">
