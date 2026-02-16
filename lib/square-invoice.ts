@@ -63,16 +63,30 @@ export async function createInvoiceForBooking(params: InvoiceParams) {
   const depositCents = BigInt(Math.round(params.depositAmount * 100));
 
   // Deposit due date: 3 days from now
-  const depositDue = new Date();
-  depositDue.setDate(depositDue.getDate() + 3);
-  const depositDueStr = depositDue.toISOString().split("T")[0];
+  const now = new Date();
+  const depositDue = new Date(now);
+  depositDue.setDate(now.getDate() + 3);
 
   // Balance due date: 3 days before event
-  const eventDateObj = new Date(params.eventDate);
-  const balanceDue = new Date(eventDateObj.getTime() - 3 * 24 * 60 * 60 * 1000);
+  const eventDateObj = new Date(params.eventDate + "T00:00:00");
+  const balanceDue = new Date(eventDateObj);
+  balanceDue.setDate(eventDateObj.getDate() - 3);
+
+  // Square requires deposit due BEFORE balance due.
+  // For close events, the balance date can land before the deposit date.
+  // Fix: push balance to at least 1 day after deposit.
+  if (balanceDue.getTime() <= depositDue.getTime()) {
+    balanceDue.setTime(depositDue.getTime());
+    balanceDue.setDate(balanceDue.getDate() + 1);
+  }
+
+  const depositDueStr = depositDue.toISOString().split("T")[0];
   const balanceDueStr = balanceDue.toISOString().split("T")[0];
 
-  // 4. Create Invoice with two payment requests: deposit + balance
+  // If deposit would be on or after the event, skip the split and use a single balance payment
+  const useDepositSplit = depositDue < eventDateObj;
+
+  // 4. Create Invoice with payment request(s)
   const invoiceResult = await client.invoices.create({
     invoice: {
       orderId,
@@ -80,22 +94,30 @@ export async function createInvoiceForBooking(params: InvoiceParams) {
       primaryRecipient: {
         customerId,
       },
-      paymentRequests: [
-        {
-          requestType: "DEPOSIT",
-          fixedAmountRequestedMoney: {
-            amount: depositCents,
-            currency: "USD",
-          },
-          dueDate: depositDueStr,
-          tippingEnabled: false,
-        },
-        {
-          requestType: "BALANCE",
-          dueDate: balanceDueStr,
-          tippingEnabled: false,
-        },
-      ],
+      paymentRequests: useDepositSplit
+        ? [
+            {
+              requestType: "DEPOSIT",
+              fixedAmountRequestedMoney: {
+                amount: depositCents,
+                currency: "USD",
+              },
+              dueDate: depositDueStr,
+              tippingEnabled: false,
+            },
+            {
+              requestType: "BALANCE",
+              dueDate: balanceDueStr,
+              tippingEnabled: false,
+            },
+          ]
+        : [
+            {
+              requestType: "BALANCE",
+              dueDate: eventDateObj.toISOString().split("T")[0],
+              tippingEnabled: false,
+            },
+          ],
       deliveryMethod: "EMAIL",
       title: `Catering Invoice - ${params.eventType}`,
       description: `Event: ${params.eventType}\nDate: ${params.eventDate}\nClient: ${params.clientName}`,
