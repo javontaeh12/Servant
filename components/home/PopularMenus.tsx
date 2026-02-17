@@ -1,8 +1,30 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChefHat, ArrowRight } from "lucide-react";
-import menuData from "@/data/menu.json";
+import { ChefHat, ArrowRight, Loader2 } from "lucide-react";
+import { MenuConfig } from "@/lib/types";
 
 export default function PopularMenus() {
+  const [menuData, setMenuData] = useState<MenuConfig | null>(null);
+
+  useEffect(() => {
+    fetch("/api/menu")
+      .then((res) => res.json())
+      .then((data: MenuConfig) => setMenuData(data))
+      .catch(() => {});
+  }, []);
+
+  if (!menuData) {
+    return (
+      <section className="py-24 md:py-32 px-6 sm:px-8 bg-sky/30">
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="animate-spin text-primary" size={32} />
+        </div>
+      </section>
+    );
+  }
+
   const presetMeals = menuData.presetMeals.filter((meal) => meal.isAvailable);
   const menuItems = menuData.items;
 

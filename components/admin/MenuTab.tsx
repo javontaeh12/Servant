@@ -485,7 +485,7 @@ export default function MenuTab() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search categories, items, or presets..."
+          placeholder="Search categories, items, or popular meals..."
           className={cn(inputClass, "pl-10")}
         />
       </div>
@@ -586,13 +586,13 @@ export default function MenuTab() {
         </>
       )}
 
-      {/* Preset Meals Section */}
+      {/* Popular Meals Section */}
       {renderSection(
         "presets",
-        "Preset Meals",
+        "Popular Meals",
         matchedPresets.length,
         addPresetMeal,
-        "Add Preset",
+        "Add Meal",
         <div className="space-y-4">
           {matchedPresets.map((preset) => {
             const index = config.presetMeals.findIndex((pm) => pm.id === preset.id);
@@ -611,7 +611,7 @@ export default function MenuTab() {
                       onChange={(e) =>
                         updatePresetMeal(index, "name", e.target.value)
                       }
-                      placeholder="Preset meal name"
+                      placeholder="Meal name"
                       className={inputClass}
                     />
                   </div>
