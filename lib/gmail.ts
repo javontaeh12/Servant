@@ -1,13 +1,15 @@
 import { google } from "googleapis";
 import { getGmailOAuth2Client } from "./google-calendar";
 import { sanitizeHeaderValue } from "./sanitize";
+import { readBusiness } from "./business-storage";
 
 export async function sendEmail(to: string, subject: string, htmlBody: string) {
   const auth = await getGmailOAuth2Client();
   const gmail = google.gmail({ version: "v1", auth });
 
+  const business = await readBusiness();
   const fromEmail = sanitizeHeaderValue(
-    process.env.ALLOWED_ADMIN_EMAILS?.split(",")[0]?.trim() || "noreply@example.com"
+    business.email || process.env.ALLOWED_ADMIN_EMAILS?.split(",")[0]?.trim() || "noreply@example.com"
   );
   const safeTo = sanitizeHeaderValue(to);
   const safeSubject = sanitizeHeaderValue(subject);

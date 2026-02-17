@@ -6,6 +6,7 @@ import { calculateEstimate } from "@/lib/pricing";
 import { MealSelection } from "@/lib/types";
 import { sendEmail } from "@/lib/gmail";
 import { adminNewBookingEmail } from "@/lib/email-templates";
+import { readBusiness } from "@/lib/business-storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -113,7 +114,8 @@ export async function POST(request: NextRequest) {
 
     // Send admin notification email (non-blocking)
     try {
-      const adminEmail = process.env.ALLOWED_ADMIN_EMAILS?.split(",")[0]?.trim();
+      const business = await readBusiness();
+      const adminEmail = business.email || process.env.ALLOWED_ADMIN_EMAILS?.split(",")[0]?.trim();
       if (adminEmail) {
         const { subject, html } = adminNewBookingEmail({
           clientName: name,
