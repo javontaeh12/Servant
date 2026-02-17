@@ -24,5 +24,6 @@ export async function writeGallery(config: GalleryConfig): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
   });
 }

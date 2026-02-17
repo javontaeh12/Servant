@@ -42,9 +42,10 @@ export async function PUT(request: NextRequest) {
     await writeGallery(body);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error writing gallery:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error writing gallery:", message, error);
     return NextResponse.json(
-      { error: "Failed to save gallery" },
+      { error: `Failed to save gallery: ${message}` },
       { status: 500 }
     );
   }
