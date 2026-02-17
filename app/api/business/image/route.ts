@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
+import { put, del, list } from "@vercel/blob";
 import { getSessionFromRequest } from "@/lib/session";
 import { readBusiness, writeBusiness } from "@/lib/business-storage";
 
@@ -34,35 +33,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
-    const filename = `about-image.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    // Remove old about images
-    const existing = await fs.readdir(uploadDir);
-    for (const f of existing) {
-      if (f.startsWith("about-image.")) {
-        await fs.unlink(path.join(uploadDir, f));
-      }
+    // Delete old about images from Blob
+    const { blobs } = await list({ prefix: "uploads/about-image" });
+    for (const blob of blobs) {
+      await del(blob.url);
     }
 
+    const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
+    const filename = `about-image.${ext}`;
+    const blobPath = `uploads/${filename}`;
+
     const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(path.join(uploadDir, filename), buffer);
+    const blob = await put(blobPath, buffer, {
+      access: "public",
+      contentType: file.type,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+    });
 
-    const imagePath = `/uploads/${filename}`;
-
-    // Update business.json with new image path
+    // Update business config with new image URL
     const business = await readBusiness();
-    business.aboutImage = imagePath;
+    business.aboutImage = blob.url;
     await writeBusiness(business);
 
-    return NextResponse.json({ success: true, path: imagePath });
+    return NextResponse.json({ success: true, path: blob.url });
   } catch (error) {
     console.error("Error uploading image:", error);
     return NextResponse.json(
-      { error: "Failed to upload image" },
+      { error: `Failed to upload image: ${error instanceof Error ? error.message : "Unknown error"}` },
       { status: 500 }
     );
   }

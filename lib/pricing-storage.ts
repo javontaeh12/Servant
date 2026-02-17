@@ -1,9 +1,14 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { put, list } from "@vercel/blob";
 import { PricingConfig, PricingEntry } from "./types";
-import { withFileLock } from "./file-lock";
 
-const PRICING_FILE = path.join(process.cwd(), "data", "pricing.json");
+const PRICING_JSON_PATH = "data/pricing.json";
+
+const DEFAULT_PRICING: PricingConfig = {
+  eventTypes: {},
+  serviceStyles: {},
+  perPersonRate: 0,
+  addOns: [],
+};
 
 // Normalize entries that may be in old number format to PricingEntry
 function normalizeEntries(
@@ -21,17 +26,31 @@ function normalizeEntries(
 }
 
 export async function readPricing(): Promise<PricingConfig> {
-  const raw = await fs.readFile(PRICING_FILE, "utf-8");
-  const data = JSON.parse(raw);
-  return {
-    ...data,
-    eventTypes: normalizeEntries(data.eventTypes ?? {}),
-    serviceStyles: normalizeEntries(data.serviceStyles ?? {}),
-  } as PricingConfig;
+  try {
+    const { blobs } = await list({ prefix: PRICING_JSON_PATH });
+    if (blobs.length === 0) {
+      return DEFAULT_PRICING;
+    }
+    const response = await fetch(blobs[0].url);
+    if (!response.ok) {
+      return DEFAULT_PRICING;
+    }
+    const data = await response.json();
+    return {
+      ...data,
+      eventTypes: normalizeEntries(data.eventTypes ?? {}),
+      serviceStyles: normalizeEntries(data.serviceStyles ?? {}),
+    } as PricingConfig;
+  } catch {
+    return DEFAULT_PRICING;
+  }
 }
 
 export async function writePricing(config: PricingConfig): Promise<void> {
-  await withFileLock(PRICING_FILE, () =>
-    fs.writeFile(PRICING_FILE, JSON.stringify(config, null, 2), "utf-8")
-  );
+  await put(PRICING_JSON_PATH, JSON.stringify(config, null, 2), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+  });
 }

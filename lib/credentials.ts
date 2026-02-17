@@ -1,8 +1,6 @@
-import fs from "fs/promises";
-import path from "path";
-import { withFileLock } from "./file-lock";
+import { put, list } from "@vercel/blob";
 
-const CREDENTIALS_PATH = path.join(process.cwd(), "data", "credentials.json");
+const CREDENTIALS_JSON_PATH = "data/credentials.json";
 
 export interface StoredCredentials {
   google?: {
@@ -22,8 +20,15 @@ export interface StoredCredentials {
 
 export async function getCredentials(): Promise<StoredCredentials> {
   try {
-    const data = await fs.readFile(CREDENTIALS_PATH, "utf-8");
-    return JSON.parse(data);
+    const { blobs } = await list({ prefix: CREDENTIALS_JSON_PATH });
+    if (blobs.length === 0) {
+      return {};
+    }
+    const response = await fetch(blobs[0].url);
+    if (!response.ok) {
+      return {};
+    }
+    return (await response.json()) as StoredCredentials;
   } catch {
     return {};
   }
@@ -32,10 +37,13 @@ export async function getCredentials(): Promise<StoredCredentials> {
 export async function saveCredentials(
   creds: StoredCredentials
 ): Promise<void> {
-  await withFileLock(CREDENTIALS_PATH, async () => {
-    const existing = await getCredentials();
-    const merged = { ...existing, ...creds };
-    await fs.writeFile(CREDENTIALS_PATH, JSON.stringify(merged, null, 2));
+  const existing = await getCredentials();
+  const merged = { ...existing, ...creds };
+  await put(CREDENTIALS_JSON_PATH, JSON.stringify(merged, null, 2), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    allowOverwrite: true,
   });
 }
 
