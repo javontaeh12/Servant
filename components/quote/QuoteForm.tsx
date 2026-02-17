@@ -175,10 +175,21 @@ export default function QuoteForm() {
     }
   };
 
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const isValidPhone = (phone: string) =>
+    /^[\d\s()+-]{7,20}$/.test(phone.trim());
+
   const canProceed = () => {
     switch (step) {
       case 1:
-        return form.eventType && form.serviceType && form.guestCount;
+        return (
+          form.eventType &&
+          form.serviceType &&
+          form.guestCount &&
+          parseInt(form.guestCount) > 0
+        );
       case 2:
         return true; // meal selection is optional
       case 3:
@@ -186,7 +197,13 @@ export default function QuoteForm() {
       case 4:
         return form.eventDate && form.eventTime;
       case 5:
-        return form.name && form.email && form.phone;
+        return (
+          form.name.trim() &&
+          form.email.trim() &&
+          isValidEmail(form.email) &&
+          form.phone.trim() &&
+          isValidPhone(form.phone)
+        );
       default:
         return true;
     }
@@ -743,6 +760,11 @@ export default function QuoteForm() {
                 placeholder="you@email.com"
                 className={inputClass}
               />
+              {form.email && !isValidEmail(form.email) && (
+                <p className="text-red-500 text-xs mt-1.5">
+                  Please enter a valid email address
+                </p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Phone *</label>
@@ -753,6 +775,11 @@ export default function QuoteForm() {
                 placeholder="(555) 123-4567"
                 className={inputClass}
               />
+              {form.phone && !isValidPhone(form.phone) && (
+                <p className="text-red-500 text-xs mt-1.5">
+                  Please enter a valid phone number
+                </p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Dietary Restrictions</label>
@@ -1007,7 +1034,7 @@ export default function QuoteForm() {
 
       {/* Sticky running total */}
       {estimate && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-sky-deep shadow-lg z-50">
+        <div className="fixed bottom-[4.5rem] md:bottom-0 left-0 right-0 bg-white border-t border-sky-deep shadow-lg z-40">
           <div className="max-w-xl mx-auto px-6">
             <button
               type="button"

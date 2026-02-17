@@ -1,6 +1,6 @@
 import { escapeHtml } from "./sanitize";
 
-const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").trim();
+const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://iasfcatering.com").trim();
 
 interface BookingDetails {
   clientName: string;
@@ -23,7 +23,7 @@ export function adminNewBookingEmail(booking: BookingDetails): { subject: string
     subject: `New Catering Booking Request - ${booking.eventType}`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-        <div style="background: #f59e0b; padding: 20px 24px;">
+        <div style="background: #4B9CD3; padding: 20px 24px;">
           <h1 style="color: #ffffff; margin: 0; font-size: 20px;">New Booking Request</h1>
         </div>
         <div style="padding: 24px;">

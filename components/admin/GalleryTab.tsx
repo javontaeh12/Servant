@@ -28,10 +28,10 @@ export default function GalleryTab() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
-  const [caption, setCaption] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState("");
@@ -69,14 +69,31 @@ export default function GalleryTab() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSelectedFile(file);
-    setPreview(URL.createObjectURL(file));
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const remaining = 20 - images.length;
+    const selected = Array.from(files).slice(0, remaining);
+
+    if (files.length > remaining) {
+      setSaveError(`Only ${remaining} more image${remaining === 1 ? "" : "s"} allowed. Selected first ${selected.length}.`);
+    }
+
+    // Revoke old previews
+    previews.forEach((url) => URL.revokeObjectURL(url));
+
+    setSelectedFiles(selected);
+    setPreviews(selected.map((f) => URL.createObjectURL(f)));
+  };
+
+  const removeSelectedFile = (index: number) => {
+    URL.revokeObjectURL(previews[index]);
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (selectedFiles.length === 0) return;
     if (images.length >= 20) {
       setSaveError("Maximum of 20 images allowed");
       return;
@@ -86,33 +103,40 @@ export default function GalleryTab() {
     setSaveError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("image", selectedFile);
+      const newImages: GalleryImage[] = [];
 
-      const res = await fetch("/api/gallery/image", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      for (let i = 0; i < selectedFiles.length; i++) {
+        setUploadProgress(`Uploading ${i + 1} of ${selectedFiles.length}...`);
 
-      const newImage: GalleryImage = {
-        id: Date.now().toString(),
-        src: data.path,
-        caption,
-        sortOrder: images.length,
-      };
+        const formData = new FormData();
+        formData.append("image", selectedFiles[i]);
 
-      await saveImages([...images, newImage]);
-      setSelectedFile(null);
-      setPreview(null);
-      setCaption("");
+        const res = await fetch("/api/gallery/image", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        newImages.push({
+          id: (Date.now() + i).toString(),
+          src: data.path,
+          caption: "",
+          sortOrder: images.length + i,
+        });
+      }
+
+      await saveImages([...images, ...newImages]);
+      previews.forEach((url) => URL.revokeObjectURL(url));
+      setSelectedFiles([]);
+      setPreviews([]);
       setShowUpload(false);
       if (fileRef.current) fileRef.current.value = "";
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -167,9 +191,9 @@ export default function GalleryTab() {
 
   const cancelUpload = () => {
     setShowUpload(false);
-    setSelectedFile(null);
-    setPreview(null);
-    setCaption("");
+    previews.forEach((url) => URL.revokeObjectURL(url));
+    setSelectedFiles([]);
+    setPreviews([]);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -200,7 +224,7 @@ export default function GalleryTab() {
             className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 text-xs font-bold tracking-wide uppercase hover:bg-primary/90 transition-colors rounded-sm"
           >
             <Plus size={14} />
-            Add Image
+            Add Images
           </button>
         )}
       </div>
@@ -224,7 +248,7 @@ export default function GalleryTab() {
         <div className="border border-sky-deep rounded-sm p-6 space-y-4 bg-white">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-heading text-sm font-bold text-slate-text uppercase tracking-wide">
-              Upload Image
+              Upload Images
             </h3>
             <button
               onClick={cancelUpload}
@@ -235,18 +259,34 @@ export default function GalleryTab() {
           </div>
 
           <div>
-            <label className={labelClass}>Image</label>
+            <label className={labelClass}>Images</label>
             <div
               onClick={() => fileRef.current?.click()}
               className="border-2 border-dashed border-sky-deep rounded-sm p-8 text-center cursor-pointer hover:border-primary/40 transition-colors"
             >
-              {preview ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="max-h-48 mx-auto rounded-sm"
-                />
+              {previews.length > 0 ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {previews.map((src, i) => (
+                    <div key={i} className="relative group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={`Preview ${i + 1}`}
+                        className="w-full aspect-square object-cover rounded-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSelectedFile(i);
+                        }}
+                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="space-y-2">
                   <Upload
@@ -255,10 +295,10 @@ export default function GalleryTab() {
                     strokeWidth={1.5}
                   />
                   <p className="text-sm text-slate-muted">
-                    Click to select an image
+                    Click to select images
                   </p>
                   <p className="text-xs text-slate-muted/70">
-                    JPEG, PNG, or WebP up to 5MB
+                    JPEG, PNG, or WebP up to 5MB each &middot; Select multiple files
                   </p>
                 </div>
               )}
@@ -268,35 +308,30 @@ export default function GalleryTab() {
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={handleFileChange}
+              multiple
               className="hidden"
             />
-          </div>
-
-          <div>
-            <label className={labelClass}>Caption (optional)</label>
-            <input
-              type="text"
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Describe this image..."
-              className={inputClass}
-            />
+            {selectedFiles.length > 0 && (
+              <p className="text-xs text-slate-muted mt-2">
+                {selectedFiles.length} file{selectedFiles.length === 1 ? "" : "s"} selected
+              </p>
+            )}
           </div>
 
           <button
             onClick={handleUpload}
-            disabled={!selectedFile || uploading}
+            disabled={selectedFiles.length === 0 || uploading}
             className="flex items-center justify-center gap-2 w-full bg-primary text-white px-4 py-3 text-xs font-bold tracking-wide uppercase hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-sm"
           >
             {uploading ? (
               <>
                 <Loader2 className="animate-spin" size={14} />
-                Uploading...
+                {uploadProgress || "Uploading..."}
               </>
             ) : (
               <>
                 <Upload size={14} />
-                Upload Image
+                Upload {selectedFiles.length > 1 ? `${selectedFiles.length} Images` : "Image"}
               </>
             )}
           </button>

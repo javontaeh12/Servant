@@ -3,8 +3,8 @@ import { NavLink, Service, Testimonial, Value } from "./types";
 export const BUSINESS = {
   name: "I'm A Servant First LLC",
   tagline: "Upscale Southern Catering, Crafted with Heart",
-  phone: "(555) 123-4567",
-  email: "info@imaservantfirst.com",
+  phone: "910-293-2333",
+  email: "contact@imaservantfirst.com",
   address: "North Carolina",
   hours: {
     weekdays: "Mon - Fri: 9:00 AM - 7:00 PM",
@@ -17,6 +17,7 @@ export const NAV_LINKS: NavLink[] = [
   { label: "About", href: "/about" },
   { label: "Specialties", href: "/services" },
   { label: "Menus", href: "/menus" },
+  { label: "Gallery", href: "/gallery" },
   { label: "Quote", href: "/quote" },
   { label: "Contact", href: "/contact" },
 ];

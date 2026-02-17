@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, UtensilsCrossed, FileText, Phone, BookOpen } from "lucide-react";
+import { Home, UtensilsCrossed, FileText, Phone, Info, Images } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BOTTOM_NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home },
-  { label: "Specialties", href: "/services", icon: UtensilsCrossed },
+  { label: "About", href: "/about", icon: Info },
   { label: "Quote", href: "/quote", icon: FileText },
+  { label: "Gallery", href: "/gallery", icon: Images },
+  { label: "Specialties", href: "/services", icon: UtensilsCrossed },
   { label: "Contact", href: "/contact", icon: Phone },
-  { label: "Menus", href: "/menus", icon: BookOpen },
 ];
 
 export default function MobileMenu() {
@@ -57,7 +58,7 @@ export default function MobileMenu() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center pt-2 pb-1 min-w-[3.5rem]"
+              className="flex flex-col items-center justify-center pt-2 pb-1 min-w-[3rem]"
             >
               <Icon
                 size={22}

@@ -1,7 +1,7 @@
 {
   "eventTypes": {
     "Wedding Receptions": {
-      "price": 0.01,
+      "price": 0,
       "pricingType": "per-person"
     },
     "Corporate Events": {
@@ -47,15 +47,11 @@
     "Other": {
       "price": 0,
       "pricingType": "flat"
-    },
-    "New Event Type": {
-      "price": 0,
-      "pricingType": "flat"
     }
   },
   "serviceStyles": {
     "Full Catering (Buffet)": {
-      "price": 0.01,
+      "price": 0,
       "pricingType": "per-person"
     },
     "Plated Dinner Service": {
@@ -77,10 +73,6 @@
     "Custom Package": {
       "price": 0,
       "pricingType": "flat"
-    },
-    "New Service Style": {
-      "price": 0,
-      "pricingType": "flat"
     }
   },
   "perPersonRate": 0,
@@ -90,7 +82,7 @@
       "name": "Beverage Service",
       "description": "Non-alcoholic drinks including sweet tea, lemonade, water, and coffee",
       "pricingType": "per-person",
-      "price": 0.001
+      "price": 0
     },
     {
       "id": "silverware",

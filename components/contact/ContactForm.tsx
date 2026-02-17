@@ -28,7 +28,7 @@ export default function ContactForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name,
+          name: `[Contact Form] ${form.name}`,
           email: form.email,
           phone: form.phone,
           eventType: "General Inquiry",
@@ -37,7 +37,7 @@ export default function ContactForm() {
           eventDate: new Date().toISOString().split("T")[0],
           eventTime: new Date().toISOString(),
           dietaryNeeds: "",
-          notes: form.message,
+          notes: `Contact form message:\n\n${form.message}`,
         }),
       });
       const data = await res.json();
