@@ -1,11 +1,11 @@
-import galleryData from "@/data/gallery.json";
 import { GalleryConfig } from "@/lib/types";
+import { readGallery } from "@/lib/gallery-storage";
 import GalleryGrid from "@/components/gallery/GalleryGrid";
 
 export const dynamic = "force-dynamic";
 
-export default function GalleryPage() {
-  const { images } = galleryData as GalleryConfig;
+export default async function GalleryPage() {
+  const { images } = await readGallery();
   const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (

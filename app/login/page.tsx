@@ -1,12 +1,36 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { LogIn } from "lucide-react";
 
 function LoginForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const error = searchParams.get("error");
+  const [checking, setChecking] = useState(true);
+
+  // Check if user already has a valid session — if so, redirect to admin
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated) {
+          router.replace("/admin");
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => setChecking(false));
+  }, [router]);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-pulse text-slate-muted">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-6">

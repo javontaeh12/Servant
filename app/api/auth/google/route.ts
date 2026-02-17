@@ -15,15 +15,11 @@ export async function GET() {
 
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
-      prompt: "consent",
       state,
       scope: [
         "openid",
         "email",
         "profile",
-        "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/gmail.send",
-        "https://www.googleapis.com/auth/gmail.readonly",
       ],
     });
 

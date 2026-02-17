@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
+import { put, del, list } from "@vercel/blob";
 import { getSessionFromRequest } from "@/lib/session";
-
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "gallery");
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,15 +32,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
-    const filename = `${Date.now()}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(path.join(UPLOAD_DIR, filename), buffer);
+    const filename = `gallery/${Date.now()}.${ext}`;
 
-    const imagePath = `/uploads/gallery/${filename}`;
-    return NextResponse.json({ success: true, path: imagePath });
+    const blob = await put(filename, file, {
+      access: "public",
+      contentType: file.type,
+    });
+
+    return NextResponse.json({ success: true, path: blob.url });
   } catch (error) {
     console.error("Error uploading gallery image:", error);
     return NextResponse.json(
@@ -63,15 +60,15 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const src = searchParams.get("src");
 
-    if (!src || !src.startsWith("/uploads/gallery/")) {
+    if (!src) {
       return NextResponse.json({ error: "Invalid image path" }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), "public", src);
+    // Verify the URL is a Vercel Blob URL before deleting
     try {
-      await fs.unlink(filePath);
+      await del(src);
     } catch {
-      // File may already be deleted, that's fine
+      // Blob may already be deleted
     }
 
     return NextResponse.json({ success: true });

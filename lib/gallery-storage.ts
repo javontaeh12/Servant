@@ -1,17 +1,28 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { put, list } from "@vercel/blob";
 import { GalleryConfig } from "./types";
-import { withFileLock } from "./file-lock";
 
-const GALLERY_FILE = path.join(process.cwd(), "data", "gallery.json");
+const GALLERY_JSON_PATH = "gallery/gallery.json";
 
 export async function readGallery(): Promise<GalleryConfig> {
-  const raw = await fs.readFile(GALLERY_FILE, "utf-8");
-  return JSON.parse(raw) as GalleryConfig;
+  try {
+    const { blobs } = await list({ prefix: GALLERY_JSON_PATH });
+    if (blobs.length === 0) {
+      return { images: [] };
+    }
+    const response = await fetch(blobs[0].url);
+    if (!response.ok) {
+      return { images: [] };
+    }
+    return (await response.json()) as GalleryConfig;
+  } catch {
+    return { images: [] };
+  }
 }
 
 export async function writeGallery(config: GalleryConfig): Promise<void> {
-  await withFileLock(GALLERY_FILE, () =>
-    fs.writeFile(GALLERY_FILE, JSON.stringify(config, null, 2), "utf-8")
-  );
+  await put(GALLERY_JSON_PATH, JSON.stringify(config, null, 2), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+  });
 }

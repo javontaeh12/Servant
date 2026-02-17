@@ -1,9 +1,8 @@
 import Image from "next/image";
-import galleryData from "@/data/gallery.json";
-import { GalleryConfig } from "@/lib/types";
+import { readGallery } from "@/lib/gallery-storage";
 
-export default function GallerySection() {
-  const { images } = galleryData as GalleryConfig;
+export default async function GallerySection() {
+  const { images } = await readGallery();
 
   if (images.length === 0) return null;
 

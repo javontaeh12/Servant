@@ -84,7 +84,7 @@ function AdminContent() {
             </h1>
             <p className="text-slate-muted text-sm">
               {session
-                ? `Signed in as ${session.name}`
+                ? `Signed in as ${session.name.split(" ").pop()?.charAt(0).toUpperCase()}${session.name.split(" ").pop()?.slice(1).toLowerCase() || session.name}`
                 : "Manage bookings, payments, menu, and pricing."}
             </p>
           </div>
