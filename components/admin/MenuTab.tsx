@@ -12,7 +12,10 @@ import {
   ChevronDown,
   ChevronRight,
   Search,
+  ImagePlus,
+  X,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { MenuConfig, MenuCategory, MenuItem, PresetMeal } from "@/lib/types";
 
@@ -246,10 +249,66 @@ export default function MenuTab() {
 
   const removePresetMeal = (index: number) => {
     if (!config) return;
+    const meal = config.presetMeals[index];
+    // Delete the image from blob if it exists
+    if (meal.image) {
+      fetch(`/api/menu/image?url=${encodeURIComponent(meal.image)}`, {
+        method: "DELETE",
+      }).catch(() => {});
+    }
     setConfig({
       ...config,
       presetMeals: config.presetMeals.filter((_, i) => i !== index),
     });
+  };
+
+  const [uploadingMealImage, setUploadingMealImage] = useState<string | null>(null);
+
+  const handleMealImageUpload = async (presetIndex: number, file: File) => {
+    if (!config) return;
+    const meal = config.presetMeals[presetIndex];
+    setUploadingMealImage(meal.id);
+
+    try {
+      // Delete old image if exists
+      if (meal.image) {
+        await fetch(`/api/menu/image?url=${encodeURIComponent(meal.image)}`, {
+          method: "DELETE",
+        });
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("/api/menu/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setSaveError(data.error || "Failed to upload image");
+        return;
+      }
+
+      const data = await res.json();
+      updatePresetMeal(presetIndex, "image", data.url);
+    } catch {
+      setSaveError("Failed to upload meal image");
+    } finally {
+      setUploadingMealImage(null);
+    }
+  };
+
+  const removeMealImage = async (presetIndex: number) => {
+    if (!config) return;
+    const meal = config.presetMeals[presetIndex];
+    if (meal.image) {
+      fetch(`/api/menu/image?url=${encodeURIComponent(meal.image)}`, {
+        method: "DELETE",
+      }).catch(() => {});
+      updatePresetMeal(presetIndex, "image", "");
+    }
   };
 
   if (loading || !config) {
@@ -635,6 +694,48 @@ export default function MenuTab() {
                   <Trash2 size={18} />
                 </button>
               </div>
+              {/* Meal Image */}
+              <div>
+                <label className={labelClass}>Meal Image</label>
+                {preset.image ? (
+                  <div className="relative w-40 h-28 rounded-sm overflow-hidden border border-sky-deep">
+                    <Image
+                      src={preset.image}
+                      alt={preset.name || "Meal image"}
+                      fill
+                      className="object-cover"
+                      sizes="160px"
+                    />
+                    <button
+                      onClick={() => removeMealImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer w-fit border border-dashed border-sky-deep rounded-sm px-4 py-3 hover:border-primary/50 transition-colors">
+                    {uploadingMealImage === preset.id ? (
+                      <Loader2 className="animate-spin text-primary" size={16} />
+                    ) : (
+                      <ImagePlus size={16} className="text-slate-muted" />
+                    )}
+                    <span className="text-sm text-slate-muted">
+                      {uploadingMealImage === preset.id ? "Uploading..." : "Upload image"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleMealImageUpload(index, file);
+                        e.target.value = "";
+                      }}
+                      disabled={uploadingMealImage === preset.id}
+                    />
+                  </label>
+                )}</div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div>
                   <label className={labelClass}>Price / Person</label>

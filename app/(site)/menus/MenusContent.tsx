@@ -87,7 +87,7 @@ export default function MenusContent() {
           {presetMeals.map((meal, i) => {
             const isEven = i % 2 === 1;
             const grouped = getItemsByCategory(meal.itemIds);
-            const mealImage = (meal as { image?: string }).image;
+            const mealImage = meal.image;
 
             return (
               <div key={meal.id}>

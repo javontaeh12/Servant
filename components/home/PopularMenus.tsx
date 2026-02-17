@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChefHat, ArrowRight, Loader2 } from "lucide-react";
 import { MenuConfig } from "@/lib/types";
 
@@ -55,7 +56,19 @@ export default function PopularMenus() {
               className="group relative bg-white border border-sky-deep/50 p-8 lg:p-10 h-full hover:border-primary/30 hover:shadow-lg transition-all duration-500 rounded-sm"
             >
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <ChefHat className="text-primary mb-6" size={32} strokeWidth={1.5} />
+              {meal.image ? (
+                <div className="relative w-full aspect-[16/9] -mx-8 lg:-mx-10 -mt-8 lg:-mt-10 mb-6 overflow-hidden" style={{ width: "calc(100% + 4rem)" }}>
+                  <Image
+                    src={meal.image}
+                    alt={meal.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                </div>
+              ) : (
+                <ChefHat className="text-primary mb-6" size={32} strokeWidth={1.5} />
+              )}
               <h3 className="font-heading text-xl lg:text-2xl font-bold text-slate-text mb-4">
                 {meal.name}
               </h3>
