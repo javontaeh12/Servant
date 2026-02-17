@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -9,11 +9,24 @@ import { NAV_LINKS } from "@/lib/constants";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [hideOnMobile, setHideOnMobile] = useState(false);
+  const lastScrollY = useRef(0);
   const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => {
+      const y = window.scrollY;
+      setIsScrolled(y > 20);
+
+      // Hide header on mobile when scrolling down, show when scrolling up
+      if (y > 60 && y > lastScrollY.current) {
+        setHideOnMobile(true);
+      } else {
+        setHideOnMobile(false);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -23,7 +36,10 @@ export default function Header() {
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
         isScrolled
           ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100"
-          : "bg-white/80 backdrop-blur-sm"
+          : "bg-white/80 backdrop-blur-sm",
+        hideOnMobile
+          ? "-translate-y-full md:translate-y-0"
+          : "translate-y-0"
       )}
     >
       <nav className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between h-16 md:h-20">

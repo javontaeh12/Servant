@@ -146,10 +146,10 @@ export default function QuoteForm() {
 
   const goToStep = (newStep: number) => {
     setTransitioning(true);
+    window.scrollTo({ top: 0, behavior: "instant" });
     setTimeout(() => {
       setStep(newStep);
       setTransitioning(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }, 200);
   };
 
