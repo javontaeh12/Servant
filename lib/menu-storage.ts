@@ -1,19 +1,10 @@
 import { put, list } from "@vercel/blob";
 import { MenuConfig } from "./types";
+import staticMenu from "@/data/menu.json";
 
 const MENU_JSON_PATH = "data/menu.json";
 
-const DEFAULT_MENU: MenuConfig = {
-  categories: [
-    { id: "appetizers", name: "Appetizers", sortOrder: 1 },
-    { id: "entrees", name: "Entrées", sortOrder: 2 },
-    { id: "sides", name: "Sides", sortOrder: 3 },
-    { id: "desserts", name: "Desserts", sortOrder: 4 },
-    { id: "beverages", name: "Beverages", sortOrder: 5 },
-  ],
-  items: [],
-  presetMeals: [],
-};
+const DEFAULT_MENU: MenuConfig = staticMenu as MenuConfig;
 
 export async function readMenu(): Promise<MenuConfig> {
   try {

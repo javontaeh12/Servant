@@ -1,30 +1,10 @@
 import { put, list } from "@vercel/blob";
 import { BusinessInfo } from "./types";
+import staticBusiness from "@/data/business.json";
 
 const BUSINESS_JSON_PATH = "data/business.json";
 
-const DEFAULT_BUSINESS: BusinessInfo = {
-  email: "contact@imaservantfirst.com",
-  phone: "910-293-2333",
-  address: "North Carolina",
-  hours: {
-    weekdays: "Mon - Fri: 9:00 AM - 7:00 PM",
-    weekends: "Sat - Sun: 10:00 AM - 5:00 PM",
-  },
-  aboutUs: [
-    "At I'm A Servant First LLC, our name is our promise. Before we are caterers, before we are chefs, we are servants. Every dish we prepare and every table we set is an act of service — rooted in love, excellence, and the rich tradition of southern hospitality.",
-    "Born from a deep passion for bringing people together around great food, our company was founded on the belief that catering is more than a meal — it's an experience. We draw from generations of southern cooking traditions, blending time-honored recipes with modern culinary artistry.",
-    "Whether it's a wedding celebration, a corporate gathering, or a family reunion, we approach every event with the same heart: to serve first, and to serve excellently.",
-  ],
-  aboutImage: "",
-  socialLinks: {
-    facebook: "",
-    instagram: "",
-    twitter: "",
-    tiktok: "",
-    youtube: "",
-  },
-};
+const DEFAULT_BUSINESS: BusinessInfo = staticBusiness as BusinessInfo;
 
 export async function readBusiness(): Promise<BusinessInfo> {
   try {

@@ -1,14 +1,10 @@
 import { put, list } from "@vercel/blob";
 import { PricingConfig, PricingEntry } from "./types";
+import staticPricing from "@/data/pricing.json";
 
 const PRICING_JSON_PATH = "data/pricing.json";
 
-const DEFAULT_PRICING: PricingConfig = {
-  eventTypes: {},
-  serviceStyles: {},
-  perPersonRate: 0,
-  addOns: [],
-};
+const DEFAULT_PRICING: PricingConfig = staticPricing as unknown as PricingConfig;
 
 // Normalize entries that may be in old number format to PricingEntry
 function normalizeEntries(
