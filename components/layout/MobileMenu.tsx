@@ -15,6 +15,7 @@ import {
   Images,
   ChevronRight,
   Sparkles,
+  LogIn,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -170,6 +171,17 @@ export default function MobileMenu() {
                 >
                   <Sparkles size={16} strokeWidth={2} />
                   Get a Free Quote
+                </Link>
+              </div>
+
+              {/* Admin login */}
+              <div className="px-4 pt-3">
+                <Link
+                  href="/login"
+                  className="flex items-center justify-center gap-1.5 text-slate-muted/50 text-xs py-2 transition-colors hover:text-slate-muted"
+                >
+                  <LogIn size={12} />
+                  Admin Login
                 </Link>
               </div>
             </motion.div>

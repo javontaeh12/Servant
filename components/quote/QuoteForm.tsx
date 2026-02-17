@@ -695,7 +695,7 @@ export default function QuoteForm() {
                 min={minDate}
                 value={form.eventDate}
                 onChange={(e) => handleDateChange(e.target.value)}
-                className={inputClass}
+                className={cn(inputClass, "block box-border")}
               />
             </div>
             {form.eventDate && (
