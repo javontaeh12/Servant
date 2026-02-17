@@ -33,6 +33,7 @@ interface FormData {
   selectedAddOns: string[];
   eventDate: string;
   eventTime: string;
+  eventEndTime: string;
   name: string;
   email: string;
   phone: string;
@@ -48,6 +49,7 @@ const initialForm: FormData = {
   selectedAddOns: [],
   eventDate: "",
   eventTime: "",
+  eventEndTime: "",
   name: "",
   email: "",
   phone: "",
@@ -125,7 +127,7 @@ export default function QuoteForm() {
   }, []);
 
   const handleDateChange = async (date: string) => {
-    setForm((prev) => ({ ...prev, eventDate: date, eventTime: "" }));
+    setForm((prev) => ({ ...prev, eventDate: date, eventTime: "", eventEndTime: "" }));
     setAvailableSlots([]);
 
     if (!date) return;
@@ -147,6 +149,7 @@ export default function QuoteForm() {
     setTimeout(() => {
       setStep(newStep);
       setTransitioning(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }, 200);
   };
 
@@ -160,6 +163,7 @@ export default function QuoteForm() {
         body: JSON.stringify({
           ...form,
           guestCount: parseInt(form.guestCount) || 0,
+          eventEndTime: form.eventEndTime || undefined,
         }),
       });
       const data = await res.json();
@@ -195,7 +199,7 @@ export default function QuoteForm() {
       case 3:
         return true; // add-ons are optional
       case 4:
-        return form.eventDate && form.eventTime;
+        return form.eventDate && form.eventTime && form.eventEndTime;
       case 5:
         return (
           form.name.trim() &&
@@ -534,6 +538,7 @@ export default function QuoteForm() {
             {form.mealSelection?.type === "custom" && (
               <div className="space-y-6">
                 {menuConfig.categories
+                  .filter((cat) => cat.id !== "beverages")
                   .sort((a, b) => a.sortOrder - b.sortOrder)
                   .map((cat) => {
                     const items = menuConfig.items.filter(
@@ -694,46 +699,86 @@ export default function QuoteForm() {
               />
             </div>
             {form.eventDate && (
-              <div>
-                <label className={labelClass}>
-                  <Clock size={12} className="inline mr-1.5 -mt-0.5" />
-                  Available Times *
-                </label>
-                {slotsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2
-                      className="animate-spin text-primary"
-                      size={24}
-                    />
-                    <span className="ml-2 text-slate-muted text-sm">
-                      Loading available times...
-                    </span>
+              <>
+                {/* Start Time */}
+                <div>
+                  <label className={labelClass}>
+                    <Clock size={12} className="inline mr-1.5 -mt-0.5" />
+                    Start Time *
+                  </label>
+                  {slotsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2
+                        className="animate-spin text-primary"
+                        size={24}
+                      />
+                      <span className="ml-2 text-slate-muted text-sm">
+                        Loading available times...
+                      </span>
+                    </div>
+                  ) : availableSlots.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {availableSlots.map((slot) => (
+                        <button
+                          key={slot.start}
+                          type="button"
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              eventTime: slot.start,
+                              eventEndTime: "",
+                            }));
+                          }}
+                          className={cn(
+                            "p-3 border rounded-sm text-sm font-medium transition-all text-center",
+                            form.eventTime === slot.start
+                              ? "border-primary bg-primary/5 text-primary font-bold"
+                              : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
+                          )}
+                        >
+                          {slot.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-muted text-sm text-center py-6">
+                      No available times for this date. Please select a
+                      different date.
+                    </p>
+                  )}
+                </div>
+
+                {/* End Time */}
+                {form.eventTime && availableSlots.length > 0 && (
+                  <div>
+                    <label className={labelClass}>
+                      <Clock size={12} className="inline mr-1.5 -mt-0.5" />
+                      End Time *
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {availableSlots
+                        .filter((slot) => slot.start > form.eventTime)
+                        .map((slot) => (
+                          <button
+                            key={`end-${slot.start}`}
+                            type="button"
+                            onClick={() =>
+                              update("eventEndTime", slot.start)
+                            }
+                            className={cn(
+                              "p-3 border rounded-sm text-sm font-medium transition-all text-center",
+                              form.eventEndTime === slot.start
+                                ? "border-primary bg-primary/5 text-primary font-bold"
+                                : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
+                            )}
+                          >
+                            {slot.label}
+                          </button>
+                        ))}
+                    </div>
                   </div>
-                ) : availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {availableSlots.map((slot) => (
-                      <button
-                        key={slot.start}
-                        type="button"
-                        onClick={() => update("eventTime", slot.start)}
-                        className={cn(
-                          "p-3 border rounded-sm text-sm font-medium transition-all text-center",
-                          form.eventTime === slot.start
-                            ? "border-primary bg-primary/5 text-primary font-bold"
-                            : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
-                        )}
-                      >
-                        {slot.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-slate-muted text-sm text-center py-6">
-                    No available times for this date. Please select a different
-                    date.
-                  </p>
                 )}
-              </div>
+              </>
             )}
           </div>
         )}
@@ -828,6 +873,17 @@ export default function QuoteForm() {
                   <p className="text-slate-muted text-xs mb-1">Date</p>
                   <p className="text-slate-text">{form.eventDate}</p>
                 </div>
+                {form.eventTime && (
+                  <div>
+                    <p className="text-slate-muted text-xs mb-1">Time</p>
+                    <p className="text-slate-text">
+                      {availableSlots.find((s) => s.start === form.eventTime)?.label || form.eventTime}
+                      {form.eventEndTime && (
+                        <> &ndash; {availableSlots.find((s) => s.start === form.eventEndTime)?.label || form.eventEndTime}</>
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
               {getMealSummary() && (
                 <div className="border-t border-sky-deep mt-5 pt-5 text-sm">
