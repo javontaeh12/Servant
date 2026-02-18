@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { readGallery, writeGallery } from "@/lib/gallery-storage";
 import { GalleryConfig } from "@/lib/types";
 import { getSessionFromRequest } from "@/lib/session";
@@ -40,6 +41,11 @@ export async function PUT(request: NextRequest) {
     }
 
     await writeGallery(body);
+
+    // Purge cached homepage and gallery page so deleted/new images show immediately
+    revalidatePath("/");
+    revalidatePath("/gallery");
+
     return NextResponse.json({ success: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
