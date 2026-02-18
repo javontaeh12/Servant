@@ -24,20 +24,14 @@ export default function ContactForm() {
     setError(null);
 
     try {
-      const res = await fetch("/api/calendar/create-event", {
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: `[Contact Form] ${form.name}`,
+          name: form.name,
           email: form.email,
           phone: form.phone,
-          eventType: "General Inquiry",
-          serviceType: "N/A",
-          guestCount: 0,
-          eventDate: new Date().toISOString().split("T")[0],
-          eventTime: new Date().toISOString(),
-          dietaryNeeds: "",
-          notes: `Contact form message:\n\n${form.message}`,
+          message: form.message,
         }),
       });
       const data = await res.json();
