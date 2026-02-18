@@ -104,11 +104,11 @@ export default async function ContactPage() {
                     strokeWidth={1.5}
                   />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-slate-muted text-xs tracking-wide uppercase mb-1">
                     Email
                   </p>
-                  <p className="text-primary font-bold group-hover:text-primary-dark transition-colors underline underline-offset-2">
+                  <p className="text-primary font-bold group-hover:text-primary-dark transition-colors underline underline-offset-2 break-all text-sm sm:text-base">
                     {business.email}
                   </p>
                 </div>
