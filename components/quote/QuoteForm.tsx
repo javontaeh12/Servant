@@ -382,9 +382,11 @@ export default function QuoteForm() {
               >
                 <option value="">Select event type...</option>
                 {pricing &&
-                  Object.keys(pricing.eventTypes).map((type) => (
+                  Object.entries(pricing.eventTypes).map(([type, entry]) => (
                     <option key={type} value={type}>
-                      {type}
+                      {type} — {entry.pricingType === "per-person"
+                        ? `${formatCurrency(entry.price)}/person`
+                        : formatCurrency(entry.price)}
                     </option>
                   ))}
               </select>
@@ -398,9 +400,11 @@ export default function QuoteForm() {
               >
                 <option value="">Select service style...</option>
                 {pricing &&
-                  Object.keys(pricing.serviceStyles).map((style) => (
+                  Object.entries(pricing.serviceStyles).map(([style, entry]) => (
                     <option key={style} value={style}>
-                      {style}
+                      {style} — {entry.pricingType === "per-person"
+                        ? `${formatCurrency(entry.price)}/person`
+                        : entry.price >= 0 ? `+${formatCurrency(entry.price)}` : formatCurrency(entry.price)}
                     </option>
                   ))}
               </select>
