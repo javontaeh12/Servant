@@ -16,6 +16,7 @@ import {
   Building2,
   Images,
   Shield,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ import PricingTab from "@/components/admin/PricingTab";
 import BusinessTab from "@/components/admin/BusinessTab";
 import GalleryTab from "@/components/admin/GalleryTab";
 import DataRetentionTab from "@/components/admin/DataRetentionTab";
+import SpecialtiesTab from "@/components/admin/SpecialtiesTab";
 import { Suspense } from "react";
 
 const TABS = [
@@ -34,6 +36,7 @@ const TABS = [
   { id: "menu", label: "Menu", icon: UtensilsCrossed },
   { id: "pricing", label: "Pricing", icon: Settings },
   { id: "business", label: "Business", icon: Building2 },
+  { id: "specialties", label: "Specialties", icon: Sparkles },
   { id: "gallery", label: "Gallery", icon: Images },
   { id: "retention", label: "Data", icon: Shield },
 ] as const;
@@ -159,6 +162,7 @@ function AdminContent() {
         {activeTab === "menu" && <MenuTab />}
         {activeTab === "pricing" && <PricingTab />}
         {activeTab === "business" && <BusinessTab />}
+        {activeTab === "specialties" && <SpecialtiesTab />}
         {activeTab === "gallery" && <GalleryTab />}
         {activeTab === "retention" && <DataRetentionTab />}
       </div>

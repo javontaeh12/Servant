@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Heart,
   Building2,
@@ -36,8 +37,18 @@ const PREVIEW_SERVICES = [
   },
 ];
 
+type SpecialtyImages = Record<string, string>;
+
 export default function ServicesPreview() {
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [specialtyImages, setSpecialtyImages] = useState<SpecialtyImages>({});
+
+  useEffect(() => {
+    fetch("/api/specialties")
+      .then((res) => res.json())
+      .then((data) => setSpecialtyImages(data))
+      .catch(() => {});
+  }, []);
 
   const fullService = selectedService
     ? SERVICES.find((s) => s.name === selectedService)
@@ -64,33 +75,52 @@ export default function ServicesPreview() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16">
-            {PREVIEW_SERVICES.map((service) => (
-              <div
-                key={service.name}
-                className="group relative bg-sky/50 border border-sky-deep/50 p-8 lg:p-10 h-full hover:border-primary/30 hover:shadow-lg transition-all duration-500 rounded-sm"
-              >
-                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <service.icon
-                  className="text-primary mb-6"
-                  size={32}
-                  strokeWidth={1.5}
-                />
-                <h3 className="font-heading text-xl lg:text-2xl font-bold text-slate-text mb-3">
-                  {service.name}
-                </h3>
-                <p className="text-slate-muted text-sm leading-relaxed mb-6">
-                  {service.description}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setSelectedService(service.fullName)}
-                  className="inline-flex items-center gap-2 text-primary text-sm font-bold tracking-wide uppercase group-hover:gap-3 transition-all duration-300 cursor-pointer"
+            {PREVIEW_SERVICES.map((service) => {
+              const imageUrl = specialtyImages[service.fullName];
+              return (
+                <div
+                  key={service.name}
+                  className="group relative bg-sky/50 border border-sky-deep/50 h-full hover:border-primary/30 hover:shadow-lg transition-all duration-500 rounded-sm overflow-hidden"
                 >
-                  Learn More
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            ))}
+                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
+                  {imageUrl ? (
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <Image
+                        src={imageUrl}
+                        alt={service.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    </div>
+                  ) : (
+                    <div className="pt-8 lg:pt-10 px-8 lg:px-10">
+                      <service.icon
+                        className="text-primary"
+                        size={32}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  )}
+                  <div className={imageUrl ? "p-6 lg:p-8" : "px-8 lg:px-10 pt-6 pb-8 lg:pb-10"}>
+                    <h3 className="font-heading text-xl lg:text-2xl font-bold text-slate-text mb-3">
+                      {service.name}
+                    </h3>
+                    <p className="text-slate-muted text-sm leading-relaxed mb-6">
+                      {service.description}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedService(service.fullName)}
+                      className="inline-flex items-center gap-2 text-primary text-sm font-bold tracking-wide uppercase group-hover:gap-3 transition-all duration-300 cursor-pointer"
+                    >
+                      Learn More
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="text-center">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Heart,
   Building2,
@@ -14,6 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import { SERVICES } from "@/lib/constants";
+import { readSpecialtyImages } from "@/lib/specialty-storage";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Heart,
@@ -29,7 +31,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
   School,
 };
 
-export default function ServicesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ServicesPage() {
+  const specialtyImages = await readSpecialtyImages();
   return (
     <>
       {/* Page Hero */}
@@ -57,16 +62,26 @@ export default function ServicesPage() {
                 <div
                   className={`grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center`}
                 >
-                  {/* Image placeholder */}
+                  {/* Image */}
                   <div className={isEven ? "md:order-2" : ""}>
                     <div className="aspect-video bg-sky border border-sky-deep relative overflow-hidden rounded-sm">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Icon
-                          className="text-primary/10"
-                          size={64}
-                          strokeWidth={1}
+                      {specialtyImages[service.name] ? (
+                        <Image
+                          src={specialtyImages[service.name]}
+                          alt={service.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 50vw"
                         />
-                      </div>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Icon
+                            className="text-primary/10"
+                            size={64}
+                            strokeWidth={1}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 
