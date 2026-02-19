@@ -90,7 +90,7 @@ export default function QuoteForm() {
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/pricing")
+    fetch("/api/pricing", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => setPricing(data))
       .catch(() => {});

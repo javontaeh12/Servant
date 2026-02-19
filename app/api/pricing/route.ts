@@ -3,10 +3,14 @@ import { readPricing, writePricing } from "@/lib/pricing-storage";
 import { PricingConfig } from "@/lib/types";
 import { getSessionFromRequest } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const config = await readPricing();
-    return NextResponse.json(config);
+    return NextResponse.json(config, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   } catch (error) {
     console.error("Error reading pricing:", error);
     return NextResponse.json(

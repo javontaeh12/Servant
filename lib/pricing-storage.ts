@@ -27,7 +27,7 @@ export async function readPricing(): Promise<PricingConfig> {
     if (blobs.length === 0) {
       return DEFAULT_PRICING;
     }
-    const response = await fetch(blobs[0].url);
+    const response = await fetch(`${blobs[0].url}?t=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) {
       return DEFAULT_PRICING;
     }
