@@ -15,7 +15,6 @@ import {
   Home,
   Building2,
   Images,
-  Shield,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +25,6 @@ import MenuTab from "@/components/admin/MenuTab";
 import PricingTab from "@/components/admin/PricingTab";
 import BusinessTab from "@/components/admin/BusinessTab";
 import GalleryTab from "@/components/admin/GalleryTab";
-import DataRetentionTab from "@/components/admin/DataRetentionTab";
 import SpecialtiesTab from "@/components/admin/SpecialtiesTab";
 import { Suspense } from "react";
 
@@ -38,7 +36,6 @@ const TABS = [
   { id: "business", label: "Business", icon: Building2 },
   { id: "specialties", label: "Specialties", icon: Sparkles },
   { id: "gallery", label: "Gallery", icon: Images },
-  { id: "retention", label: "Data", icon: Shield },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -164,7 +161,6 @@ function AdminContent() {
         {activeTab === "business" && <BusinessTab />}
         {activeTab === "specialties" && <SpecialtiesTab />}
         {activeTab === "gallery" && <GalleryTab />}
-        {activeTab === "retention" && <DataRetentionTab />}
       </div>
     </div>
   );
