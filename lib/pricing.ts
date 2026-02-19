@@ -1,5 +1,11 @@
 import { PricingConfig, QuoteEstimate, MealSelection, MenuConfig } from "./types";
 
+function toNum(val: number | string | undefined): number {
+  if (val === "" || val === undefined) return 0;
+  const n = typeof val === "string" ? parseFloat(val) : val;
+  return isNaN(n) ? 0 : n;
+}
+
 export function calculateEstimate(
   config: PricingConfig,
   eventType: string,
@@ -12,16 +18,16 @@ export function calculateEstimate(
   const eventTypeEntry = config.eventTypes[eventType];
   const eventTypePrice = eventTypeEntry
     ? eventTypeEntry.pricingType === "per-person"
-      ? eventTypeEntry.price * guestCount
-      : eventTypeEntry.price
+      ? toNum(eventTypeEntry.price) * guestCount
+      : toNum(eventTypeEntry.price)
     : 0;
   const serviceStyleEntry = config.serviceStyles[serviceStyle];
   const serviceStylePrice = serviceStyleEntry
     ? serviceStyleEntry.pricingType === "per-person"
-      ? serviceStyleEntry.price * guestCount
-      : serviceStyleEntry.price
+      ? toNum(serviceStyleEntry.price) * guestCount
+      : toNum(serviceStyleEntry.price)
     : 0;
-  const perPersonTotal = config.perPersonRate * guestCount;
+  const perPersonTotal = toNum(config.perPersonRate) * guestCount;
 
   const addOnBreakdown = selectedAddOnIds
     .map((id) => {
@@ -29,8 +35,8 @@ export function calculateEstimate(
       if (!addOn) return null;
       const amount =
         addOn.pricingType === "per-person"
-          ? addOn.price * guestCount
-          : addOn.price;
+          ? toNum(addOn.price) * guestCount
+          : toNum(addOn.price);
       return { name: addOn.name, amount };
     })
     .filter((item): item is { name: string; amount: number } => item !== null);
@@ -69,7 +75,8 @@ export function calculateEstimate(
   };
 }
 
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | string): string {
+  if (typeof amount === "string") amount = parseFloat(amount) || 0;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

@@ -25,14 +25,32 @@ export async function PUT(request: NextRequest) {
 
     const body = (await request.json()) as PricingConfig;
 
-    if (!body.eventTypes || !body.serviceStyles || !body.addOns || typeof body.perPersonRate !== "number") {
+    if (!body.eventTypes || !body.serviceStyles || !body.addOns) {
       return NextResponse.json(
         { error: "Invalid pricing config" },
         { status: 400 }
       );
     }
 
-    await writePricing(body);
+    // Normalize empty strings to 0 before saving
+    const toNum = (v: unknown): number => {
+      if (v === "" || v === undefined || v === null) return 0;
+      const n = typeof v === "string" ? parseFloat(v) : Number(v);
+      return isNaN(n) ? 0 : n;
+    };
+
+    const normalized: PricingConfig = {
+      eventTypes: Object.fromEntries(
+        Object.entries(body.eventTypes).map(([k, v]) => [k, { ...v, price: toNum(v.price) }])
+      ),
+      serviceStyles: Object.fromEntries(
+        Object.entries(body.serviceStyles).map(([k, v]) => [k, { ...v, price: toNum(v.price) }])
+      ),
+      perPersonRate: toNum(body.perPersonRate),
+      addOns: body.addOns.map((a) => ({ ...a, price: toNum(a.price) })),
+    };
+
+    await writePricing(normalized);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error writing pricing:", error);

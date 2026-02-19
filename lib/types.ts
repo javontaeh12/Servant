@@ -46,18 +46,18 @@ export interface AddOn {
   name: string;
   description: string;
   pricingType: "per-person" | "flat";
-  price: number;
+  price: number | string;
 }
 
 export interface PricingEntry {
-  price: number;
+  price: number | string;
   pricingType: "flat" | "per-person";
 }
 
 export interface PricingConfig {
   eventTypes: Record<string, PricingEntry>;
   serviceStyles: Record<string, PricingEntry>;
-  perPersonRate: number;
+  perPersonRate: number | string;
   addOns: AddOn[];
 }
 

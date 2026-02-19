@@ -22,7 +22,7 @@ const inputClass =
 const labelClass =
   "block text-slate-muted text-xs font-bold tracking-wide uppercase mb-2";
 
-const DEFAULT_ENTRY: PricingEntry = { price: 0, pricingType: "flat" };
+const DEFAULT_ENTRY: PricingEntry = { price: "", pricingType: "flat" };
 
 export default function PricingTab() {
   const [config, setConfig] = useState<PricingConfig | null>(null);
@@ -299,11 +299,20 @@ export default function PricingTab() {
                     $
                   </span>
                   <input
-                    type="number"
-                    value={entry.price}
-                    onChange={(e) =>
-                      updateEventType(key, "price", parseFloat(e.target.value) || 0)
-                    }
+                    type="text"
+                    inputMode="decimal"
+                    value={entry.price === 0 || entry.price === "" ? "" : entry.price}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                        updateEventType(key, "price", val === "" ? "" : parseFloat(val) || val);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const num = parseFloat(e.target.value);
+                      if (!isNaN(num)) updateEventType(key, "price", num);
+                    }}
+                    placeholder="0.00"
                     className={cn(inputClass, "pl-7 w-full sm:w-32")}
                   />
                 </div>
@@ -370,11 +379,20 @@ export default function PricingTab() {
                     $
                   </span>
                   <input
-                    type="number"
-                    value={entry.price}
-                    onChange={(e) =>
-                      updateServiceStyle(key, "price", parseFloat(e.target.value) || 0)
-                    }
+                    type="text"
+                    inputMode="decimal"
+                    value={entry.price === 0 || entry.price === "" ? "" : entry.price}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                        updateServiceStyle(key, "price", val === "" ? "" : parseFloat(val) || val);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const num = parseFloat(e.target.value);
+                      if (!isNaN(num)) updateServiceStyle(key, "price", num);
+                    }}
+                    placeholder="0.00"
                     className={cn(inputClass, "pl-7 w-full sm:w-32")}
                   />
                 </div>
@@ -404,14 +422,26 @@ export default function PricingTab() {
               $
             </span>
             <input
-              type="number"
-              value={config.perPersonRate}
-              onChange={(e) =>
+              type="text"
+              inputMode="decimal"
+              value={config.perPersonRate === 0 || config.perPersonRate === "" ? "" : config.perPersonRate}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                  setConfig({
+                    ...config,
+                    perPersonRate: val === "" ? "" : parseFloat(val) || val,
+                  });
+                }
+              }}
+              onBlur={(e) => {
+                const num = parseFloat(e.target.value);
                 setConfig({
                   ...config,
-                  perPersonRate: parseFloat(e.target.value) || 0,
-                })
-              }
+                  perPersonRate: isNaN(num) ? 0 : num,
+                });
+              }}
+              placeholder="0.00"
               className={cn(inputClass, "pl-7 w-full sm:w-32")}
             />
           </div>
@@ -498,15 +528,24 @@ export default function PricingTab() {
                       $
                     </span>
                     <input
-                      type="number"
-                      value={addOn.price}
-                      onChange={(e) =>
-                        updateAddOn(
-                          index,
-                          "price",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
+                      type="text"
+                      inputMode="decimal"
+                      value={addOn.price === 0 || addOn.price === "" ? "" : addOn.price}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                          updateAddOn(
+                            index,
+                            "price",
+                            val === "" ? "" : parseFloat(val) || val
+                          );
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const num = parseFloat(e.target.value);
+                        if (!isNaN(num)) updateAddOn(index, "price", num);
+                      }}
+                      placeholder="0.00"
                       className={cn(inputClass, "pl-7 w-full sm:w-28")}
                     />
                   </div>

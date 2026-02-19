@@ -404,7 +404,7 @@ export default function QuoteForm() {
                     <option key={style} value={style}>
                       {style} — {entry.pricingType === "per-person"
                         ? `${formatCurrency(entry.price)}/person`
-                        : entry.price >= 0 ? `+${formatCurrency(entry.price)}` : formatCurrency(entry.price)}
+                        : Number(entry.price) >= 0 ? `+${formatCurrency(entry.price)}` : formatCurrency(entry.price)}
                     </option>
                   ))}
               </select>
@@ -635,10 +635,11 @@ export default function QuoteForm() {
             {pricing.addOns.map((addOn: AddOn) => {
               const selected = form.selectedAddOns.includes(addOn.id);
               const guestCount = parseInt(form.guestCount) || 0;
+              const price = typeof addOn.price === "string" ? parseFloat(addOn.price) || 0 : addOn.price;
               const cost =
                 addOn.pricingType === "per-person"
-                  ? addOn.price * guestCount
-                  : addOn.price;
+                  ? price * guestCount
+                  : price;
               return (
                 <button
                   key={addOn.id}
