@@ -55,7 +55,10 @@ export async function PUT(request: NextRequest) {
     };
 
     await writePricing(normalized);
-    return NextResponse.json({ success: true });
+
+    // Verify the save by reading back
+    const verified = await readPricing();
+    return NextResponse.json({ success: true, saved: verified });
   } catch (error) {
     console.error("Error writing pricing:", error);
     return NextResponse.json(

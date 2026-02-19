@@ -32,24 +32,25 @@ export default function SpecialtiesTab() {
   }, []);
 
   const saveMapping = async (updated: SpecialtyImages) => {
-    try {
-      const res = await fetch("/api/specialties", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      if (!res.ok) throw new Error("Failed to save");
-      setImages(updated);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch {
-      setError("Failed to save");
+    const res = await fetch("/api/specialties", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated),
+    });
+    if (res.status === 401) {
+      throw new Error("Session expired — please log out and log back in");
     }
+    if (!res.ok) {
+      throw new Error("Failed to save specialty images");
+    }
+    setImages(updated);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const handleUpload = async (serviceName: string, file: File) => {
-    if (file.size > 4 * 1024 * 1024) {
-      setError("Image must be under 4MB");
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be under 5MB");
       return;
     }
 
@@ -57,16 +58,10 @@ export default function SpecialtiesTab() {
     setError(null);
 
     try {
-      // Delete old image if exists
-      if (images[serviceName]) {
-        await fetch(`/api/specialties/image?url=${encodeURIComponent(images[serviceName])}`, {
-          method: "DELETE",
-        });
-      }
-
       const formData = new FormData();
       formData.append("image", file);
 
+      // Upload new image FIRST (before deleting old one)
       const res = await fetch("/api/specialties/image", {
         method: "POST",
         body: formData,
@@ -80,7 +75,18 @@ export default function SpecialtiesTab() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
 
+      // Save the new mapping
       await saveMapping({ ...images, [serviceName]: data.url });
+
+      // Delete old image AFTER new one is confirmed saved
+      if (images[serviceName]) {
+        const delRes = await fetch(`/api/specialties/image?url=${encodeURIComponent(images[serviceName])}`, {
+          method: "DELETE",
+        });
+        if (!delRes.ok) {
+          console.error("Failed to clean up old image:", delRes.status);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed — check your connection and try again");
     } finally {
@@ -93,17 +99,22 @@ export default function SpecialtiesTab() {
     setError(null);
 
     try {
-      if (images[serviceName]) {
-        await fetch(`/api/specialties/image?url=${encodeURIComponent(images[serviceName])}`, {
-          method: "DELETE",
-        });
-      }
-
+      // Remove from mapping first
       const updated = { ...images };
       delete updated[serviceName];
       await saveMapping(updated);
-    } catch {
-      setError("Failed to delete");
+
+      // Then delete the blob
+      if (images[serviceName]) {
+        const delRes = await fetch(`/api/specialties/image?url=${encodeURIComponent(images[serviceName])}`, {
+          method: "DELETE",
+        });
+        if (!delRes.ok) {
+          console.error("Failed to delete image blob:", delRes.status);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
     } finally {
       setDeleting(null);
     }
@@ -184,6 +195,7 @@ export default function SpecialtiesTab() {
                   ref={(el) => { fileRefs.current[service.name] = el; }}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
+                  aria-label={`Upload image for ${service.name}`}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleUpload(service.name, file);
@@ -194,6 +206,7 @@ export default function SpecialtiesTab() {
                 <button
                   onClick={() => fileRefs.current[service.name]?.click()}
                   disabled={isUploading}
+                  aria-label={imageUrl ? `Replace image for ${service.name}` : `Upload image for ${service.name}`}
                   className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-dark transition-colors px-3 py-2 border border-sky-deep rounded-sm hover:border-primary/30 disabled:opacity-50"
                 >
                   {isUploading ? (
@@ -208,6 +221,7 @@ export default function SpecialtiesTab() {
                     onClick={() => handleDelete(service.name)}
                     disabled={isDeleting}
                     className="p-2 text-slate-muted hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors disabled:opacity-50"
+                    aria-label={`Remove image for ${service.name}`}
                     title="Remove image"
                   >
                     {isDeleting ? (

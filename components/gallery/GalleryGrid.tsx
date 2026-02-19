@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import { GalleryImage } from "@/lib/types";
 import GalleryLightbox from "./GalleryLightbox";
@@ -11,6 +11,11 @@ interface GalleryGridProps {
 
 export default function GalleryGrid({ images }: GalleryGridProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+
+  const handleImageLoad = useCallback((id: string) => {
+    setLoadedImages((prev) => new Set(prev).add(id));
+  }, []);
 
   return (
     <>
@@ -19,14 +24,21 @@ export default function GalleryGrid({ images }: GalleryGridProps) {
           <button
             key={image.id}
             onClick={() => setSelectedIndex(index)}
+            aria-label={image.caption ? `View ${image.caption}` : `View gallery image ${index + 1}`}
             className="group relative overflow-hidden rounded-sm aspect-[4/3] cursor-pointer"
           >
+            {!loadedImages.has(image.id) && (
+              <div className="absolute inset-0 bg-sky animate-pulse" />
+            )}
             <Image
               src={image.src}
               alt={image.caption || "Gallery image"}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className={`object-cover transition-all duration-500 group-hover:scale-105 ${
+                loadedImages.has(image.id) ? "opacity-100" : "opacity-0"
+              }`}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              onLoad={() => handleImageLoad(image.id)}
             />
             {image.caption && (
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">

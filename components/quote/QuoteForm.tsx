@@ -154,6 +154,10 @@ export default function QuoteForm() {
   };
 
   const handleSubmit = async () => {
+    if (estimate && estimate.total <= 0) {
+      setError("Something looks off with the pricing. Please go back and check your selections.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {

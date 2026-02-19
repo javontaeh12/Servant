@@ -1,8 +1,8 @@
-import { put, list } from "@vercel/blob";
+import { put, list, del } from "@vercel/blob";
 import { PricingConfig, PricingEntry } from "./types";
 import staticPricing from "@/data/pricing.json";
 
-const PRICING_JSON_PATH = "data/pricing.json";
+const PRICING_PREFIX = "data/pricing";
 
 const DEFAULT_PRICING: PricingConfig = staticPricing as unknown as PricingConfig;
 
@@ -23,12 +23,18 @@ function normalizeEntries(
 
 export async function readPricing(): Promise<PricingConfig> {
   try {
-    const { blobs } = await list({ prefix: PRICING_JSON_PATH });
+    const { blobs } = await list({ prefix: PRICING_PREFIX });
     if (blobs.length === 0) {
       return DEFAULT_PRICING;
     }
-    const response = await fetch(`${blobs[0].url}?t=${Date.now()}`, { cache: 'no-store' });
+    // Always use the most recently uploaded blob
+    blobs.sort(
+      (a, b) =>
+        new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+    );
+    const response = await fetch(blobs[0].url, { cache: "no-store" });
     if (!response.ok) {
+      console.error("Blob fetch failed:", blobs[0].url, response.status);
       return DEFAULT_PRICING;
     }
     const data = await response.json();
@@ -37,16 +43,33 @@ export async function readPricing(): Promise<PricingConfig> {
       eventTypes: normalizeEntries(data.eventTypes ?? {}),
       serviceStyles: normalizeEntries(data.serviceStyles ?? {}),
     } as PricingConfig;
-  } catch {
+  } catch (error) {
+    console.error("readPricing error:", error);
     return DEFAULT_PRICING;
   }
 }
 
 export async function writePricing(config: PricingConfig): Promise<void> {
-  await put(PRICING_JSON_PATH, JSON.stringify(config, null, 2), {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
+  // Each write creates a unique URL (random suffix) so CDN never serves stale data
+  const result = await put(
+    `${PRICING_PREFIX}.json`,
+    JSON.stringify(config, null, 2),
+    {
+      access: "public",
+      contentType: "application/json",
+    }
+  );
+
+  // Clean up old blobs, keeping only the one we just wrote
+  try {
+    const { blobs } = await list({ prefix: PRICING_PREFIX });
+    const toDelete = blobs
+      .filter((b) => b.url !== result.url)
+      .map((b) => b.url);
+    if (toDelete.length > 0) {
+      await del(toDelete);
+    }
+  } catch {
+    // Cleanup failure is non-critical
+  }
 }
