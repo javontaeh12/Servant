@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "Image must be under 5MB" }, { status: 400 });
+    if (file.size > 4 * 1024 * 1024) {
+      return NextResponse.json({ error: "Image must be under 4MB" }, { status: 400 });
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];

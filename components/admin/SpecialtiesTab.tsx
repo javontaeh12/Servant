@@ -48,8 +48,8 @@ export default function SpecialtiesTab() {
   };
 
   const handleUpload = async (serviceName: string, file: File) => {
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be under 5MB");
+    if (file.size > 4 * 1024 * 1024) {
+      setError("Image must be under 4MB");
       return;
     }
 
@@ -71,12 +71,18 @@ export default function SpecialtiesTab() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 401) {
+        setError("Session expired — please log out and log back in");
+        return;
+      }
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
 
       await saveMapping({ ...images, [serviceName]: data.url });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Upload failed — check your connection and try again");
     } finally {
       setUploading(null);
     }
