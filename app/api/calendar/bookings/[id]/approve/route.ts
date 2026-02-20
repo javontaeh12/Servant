@@ -26,6 +26,7 @@ export async function POST(
       eventType,
       eventDate,
       guestCount,
+      mealInfo,
     } = body;
 
     if (!finalTotal || !depositAmount || !clientEmail || !clientName) {
@@ -44,6 +45,7 @@ export async function POST(
         eventDate: eventDate || new Date().toISOString().split("T")[0],
         finalTotal: Number(finalTotal),
         depositAmount: Number(depositAmount),
+        mealInfo: mealInfo || undefined,
       });
       invoiceId = invoiceResult.invoiceId;
       invoiceUrl = invoiceResult.invoiceUrl;

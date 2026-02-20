@@ -146,6 +146,7 @@ export interface CalendarBooking {
   estimatedTotal: number | null;
   invoiceId: string | null;
   invoiceUrl: string | null;
+  mealInfo: string | null;
 }
 
 // Gallery

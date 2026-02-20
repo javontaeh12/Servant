@@ -7,6 +7,40 @@ interface InvoiceParams {
   eventDate: string;
   finalTotal: number;     // Total in dollars
   depositAmount: number;  // Deposit in dollars
+  mealInfo?: string;      // JSON string with meal selection details
+}
+
+function buildInvoiceDescription(params: InvoiceParams): string {
+  const lines = [
+    `Event: ${params.eventType}`,
+    `Date: ${params.eventDate}`,
+    `Client: ${params.clientName}`,
+  ];
+
+  if (params.mealInfo) {
+    try {
+      const meal = JSON.parse(params.mealInfo) as {
+        type: "preset" | "custom";
+        presetName?: string;
+        pricePerPerson?: number;
+        items: { name: string; pricePerPerson: number }[];
+      };
+
+      lines.push("");
+      if (meal.type === "preset" && meal.presetName) {
+        lines.push(`Menu: ${meal.presetName} ($${meal.pricePerPerson}/person)`);
+      } else {
+        lines.push("Menu: Custom Selection");
+      }
+      if (meal.items?.length) {
+        lines.push(`Items: ${meal.items.map((i) => i.name).join(", ")}`);
+      }
+    } catch {
+      // Invalid JSON — skip meal info
+    }
+  }
+
+  return lines.join("\n");
 }
 
 export async function createInvoiceForBooking(params: InvoiceParams) {
@@ -120,7 +154,7 @@ export async function createInvoiceForBooking(params: InvoiceParams) {
           ],
       deliveryMethod: "EMAIL",
       title: `Catering Invoice - ${params.eventType}`,
-      description: `Event: ${params.eventType}\nDate: ${params.eventDate}\nClient: ${params.clientName}`,
+      description: buildInvoiceDescription(params),
       acceptedPaymentMethods: {
         card: true,
         bankAccount: true,

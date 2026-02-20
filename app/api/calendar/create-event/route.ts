@@ -67,8 +67,9 @@ export async function POST(request: NextRequest) {
       // Pricing is optional — event still gets created without it
     }
 
-    // Build meal description for calendar event
+    // Build meal description for calendar event + structured mealInfo JSON
     let mealDescription = "";
+    let mealInfoJson = "";
     if (mealSelection && menuConfig) {
       const ms = mealSelection as MealSelection;
       if (ms.type === "preset" && ms.presetMealId) {
@@ -77,18 +78,32 @@ export async function POST(request: NextRequest) {
         );
         if (preset) {
           const items = preset.itemIds
-            .map((id) => menuConfig!.items.find((i) => i.id === id)?.name)
+            .map((id) => {
+              const item = menuConfig!.items.find((i) => i.id === id);
+              return item ? { name: item.name, pricePerPerson: item.pricePerPerson } : null;
+            })
             .filter(Boolean);
-          mealDescription = `🍽️ Meal: ${preset.name} ($${preset.pricePerPerson}/person)\n   Items: ${items.join(", ")}`;
+          const itemNames = items.map((i) => i!.name);
+          mealDescription = `🍽️ Meal: ${preset.name} ($${preset.pricePerPerson}/person)\n   Items: ${itemNames.join(", ")}`;
+          mealInfoJson = JSON.stringify({
+            type: "preset",
+            presetName: preset.name,
+            pricePerPerson: preset.pricePerPerson,
+            items: items.map((i) => ({ name: i!.name, pricePerPerson: i!.pricePerPerson })),
+          });
         }
       } else if (ms.type === "custom" && ms.selectedItemIds?.length) {
         const items = ms.selectedItemIds
           .map((id) => {
             const item = menuConfig!.items.find((i) => i.id === id);
-            return item ? `${item.name} ($${item.pricePerPerson})` : null;
+            return item ? { name: item.name, pricePerPerson: item.pricePerPerson } : null;
           })
           .filter(Boolean);
-        mealDescription = `🍽️ Custom Menu:\n   ${items.join("\n   ")}`;
+        mealDescription = `🍽️ Custom Menu:\n   ${items.map((i) => `${i!.name} ($${i!.pricePerPerson})`).join("\n   ")}`;
+        mealInfoJson = JSON.stringify({
+          type: "custom",
+          items: items.map((i) => ({ name: i!.name, pricePerPerson: i!.pricePerPerson })),
+        });
       }
     }
 
@@ -110,6 +125,7 @@ export async function POST(request: NextRequest) {
       selectedAddOns: selectedAddOns || [],
       estimate,
       pricing,
+      mealInfo: mealInfoJson || undefined,
     });
 
     // Send admin notification email (non-blocking)

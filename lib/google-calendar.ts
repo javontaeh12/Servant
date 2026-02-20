@@ -76,8 +76,26 @@ function dateInTimezone(dateStr: string, hour: number, minute: number, timezone:
   return new Date(utcGuess.getTime() - offsetMinutes * 60000);
 }
 
+/**
+ * Generate all business-hour slots for a given date, skipping past slots.
+ */
+function generateDefaultSlots(date: string): TimeSlot[] {
+  const now = new Date();
+  const slots: TimeSlot[] = [];
+  for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour++) {
+    const slotStart = dateInTimezone(date, hour, 0, TIMEZONE);
+    const slotEnd = dateInTimezone(date, hour + 1, 0, TIMEZONE);
+    if (slotStart <= now) continue;
+    slots.push({
+      start: slotStart.toISOString(),
+      end: slotEnd.toISOString(),
+      label: `${formatTimeLabel(slotStart)} - ${formatTimeLabel(slotEnd)}`,
+    });
+  }
+  return slots;
+}
+
 export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
-  const dayStartUTC = dateInTimezone(date, BUSINESS_START_HOUR, 0, TIMEZONE);
   const dayEndUTC = dateInTimezone(date, BUSINESS_END_HOUR, 0, TIMEZONE);
 
   const now = new Date();
@@ -85,6 +103,8 @@ export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
 
   try {
     const calendar = await getCalendarClient();
+    const dayStartUTC = dateInTimezone(date, BUSINESS_START_HOUR, 0, TIMEZONE);
+
     const response = await calendar.freebusy.query({
       requestBody: {
         timeMin: dayStartUTC.toISOString(),
@@ -120,8 +140,8 @@ export async function getAvailableSlots(date: string): Promise<TimeSlot[]> {
 
     return allSlots;
   } catch (error) {
-    console.error("Error fetching available slots:", error);
-    return [];
+    console.error("Error fetching calendar availability, returning default slots:", error);
+    return generateDefaultSlots(date);
   }
 }
 
@@ -157,6 +177,7 @@ export async function listUpcomingBookings(): Promise<CalendarBooking[]> {
         estimatedTotal: props.estimatedTotal ? Number(props.estimatedTotal) : null,
         invoiceId: props.invoiceId || null,
         invoiceUrl: props.invoiceUrl || null,
+        mealInfo: props.mealInfo || null,
       };
     });
   } catch (error) {
@@ -179,6 +200,7 @@ export async function createBookingEvent(data: {
   selectedAddOns?: string[];
   estimate?: QuoteEstimate | null;
   pricing?: PricingConfig | null;
+  mealInfo?: string;
 }): Promise<{ eventId: string }> {
   let startTime: Date;
   if (data.eventTime.includes("T")) {
@@ -272,6 +294,7 @@ export async function createBookingEvent(data: {
           estimatedTotal: String(estimatedTotal),
           invoiceId: "",
           invoiceUrl: "",
+          mealInfo: data.mealInfo || "",
         },
       },
     },

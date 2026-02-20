@@ -17,6 +17,7 @@ import {
   AlertCircle,
   ExternalLink,
   Search,
+  UtensilsCrossed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CalendarBooking, BookingStatus, TimeSlot } from "@/lib/types";
@@ -66,6 +67,22 @@ function formatTime(isoString: string) {
     minute: "2-digit",
     hour12: true,
   });
+}
+
+interface ParsedMealInfo {
+  type: "preset" | "custom";
+  presetName?: string;
+  pricePerPerson?: number;
+  items: { name: string; pricePerPerson: number }[];
+}
+
+function parseMealInfo(raw: string | null): ParsedMealInfo | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as ParsedMealInfo;
+  } catch {
+    return null;
+  }
 }
 
 const statusBadgeStyles: Record<BookingStatus, string> = {
@@ -255,6 +272,7 @@ export default function BookingsTab() {
           eventType: parsed["event type"] || booking.summary.split(" - ").pop() || "Catering Event",
           eventDate: booking.start.split("T")[0],
           guestCount: parsed["guest count"] || "0",
+          mealInfo: booking.mealInfo || "",
         }),
       });
 
@@ -672,6 +690,45 @@ export default function BookingsTab() {
                           View Invoice
                         </a>
                       )}
+
+                      {/* Meal info */}
+                      {(() => {
+                        const meal = parseMealInfo(booking.mealInfo);
+                        if (!meal) return null;
+                        return (
+                          <div className="mt-3 border border-sky-deep rounded-sm p-3 bg-sky/30">
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <UtensilsCrossed size={13} className="text-primary" />
+                              <span className="text-xs font-bold text-slate-text">
+                                {meal.type === "preset"
+                                  ? `Specialty Meal: ${meal.presetName}`
+                                  : "Custom Menu"}
+                              </span>
+                              {meal.type === "preset" && meal.pricePerPerson != null && (
+                                <span className="text-xs text-slate-muted ml-1">
+                                  (${meal.pricePerPerson}/person)
+                                </span>
+                              )}
+                            </div>
+                            <ul className="space-y-0.5">
+                              {meal.items.map((item, idx) => (
+                                <li key={idx} className="flex items-center justify-between text-xs text-slate-muted">
+                                  <span>{item.name}</span>
+                                  <span className="font-medium">${item.pricePerPerson}/pp</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {meal.type === "custom" && meal.items.length > 0 && (
+                              <div className="mt-2 pt-1.5 border-t border-sky-deep flex justify-between text-xs font-bold text-slate-text">
+                                <span>Total per person</span>
+                                <span>
+                                  ${meal.items.reduce((sum, i) => sum + i.pricePerPerson, 0).toFixed(2)}/pp
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Action buttons for pending bookings */}
