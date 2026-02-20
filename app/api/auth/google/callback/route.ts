@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { createSession, isAllowedEmail, COOKIE_NAME } from "@/lib/session";
-import { saveCredentials } from "@/lib/credentials";
 
 export async function GET(request: NextRequest) {
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "").trim();
@@ -44,23 +43,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         `${baseUrl}/login?error=access_denied`
       );
-    }
-
-    // Store Google credentials for Calendar/Gmail API access
-    if (tokens.refresh_token) {
-      try {
-        await saveCredentials({
-          google: {
-            refreshToken: tokens.refresh_token,
-            email,
-            name,
-            connectedAt: new Date().toISOString(),
-          },
-        });
-      } catch {
-        // Filesystem may be read-only on Vercel — fall back to env var
-        console.warn("Could not save credentials to disk, using env var fallback");
-      }
     }
 
     // Create session JWT

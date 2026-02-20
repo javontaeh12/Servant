@@ -12,7 +12,7 @@ export async function readMenu(): Promise<MenuConfig> {
     if (blobs.length === 0) {
       return DEFAULT_MENU;
     }
-    const response = await fetch(blobs[0].url);
+    const response = await fetch(blobs[0].url, { cache: "no-store" });
     if (!response.ok) {
       return DEFAULT_MENU;
     }

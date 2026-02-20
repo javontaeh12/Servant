@@ -3,10 +3,14 @@ import { readMenu, writeMenu } from "@/lib/menu-storage";
 import { MenuConfig } from "@/lib/types";
 import { getSessionFromRequest } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const config = await readMenu();
-    return NextResponse.json(config);
+    return NextResponse.json(config, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   } catch (error) {
     console.error("Error reading menu:", error);
     return NextResponse.json(

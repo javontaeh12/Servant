@@ -337,17 +337,19 @@ export default function BookingsTab() {
     <div>
       {/* Pending banner */}
       {pendingCount > 0 && (
-        <div className="flex items-center gap-3 border border-amber-200 bg-amber-50 rounded-sm p-4 mb-6">
-          <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
-          <div className="flex-1">
-            <p className="text-amber-800 text-sm font-bold">
-              {pendingCount} booking{pendingCount !== 1 ? "s" : ""} awaiting review
-            </p>
-            <p className="text-amber-600 text-xs">Approve or reject pending bookings to notify clients.</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 border border-amber-200 bg-amber-50 rounded-sm p-4 mb-6">
+          <div className="flex items-center gap-3 flex-1">
+            <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+            <div>
+              <p className="text-amber-800 text-sm font-bold">
+                {pendingCount} booking{pendingCount !== 1 ? "s" : ""} awaiting review
+              </p>
+              <p className="text-amber-600 text-xs">Approve or reject pending bookings to notify clients.</p>
+            </div>
           </div>
           <button
             onClick={() => setFilter("pending")}
-            className="bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-sm hover:bg-amber-700 transition-colors"
+            className="bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-sm hover:bg-amber-700 transition-colors w-full sm:w-auto text-center"
           >
             View Pending
           </button>
@@ -388,13 +390,13 @@ export default function BookingsTab() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by name, email, phone, event type..."
+          placeholder="Search bookings..."
           className={cn(inputClass, "pl-10")}
         />
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 border border-sky-deep rounded-sm p-1 mb-6 w-fit">
+      <div className="flex flex-wrap gap-1 border border-sky-deep rounded-sm p-1 mb-6">
         {(["all", "pending", "approved", "rejected"] as const).map((tab) => {
           const count =
             tab === "all" ? bookings.length : bookings.filter((b) => b.bookingStatus === tab).length;
@@ -403,7 +405,7 @@ export default function BookingsTab() {
               key={tab}
               onClick={() => setFilter(tab)}
               className={cn(
-                "px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wide transition-colors",
+                "px-2.5 sm:px-3 py-1.5 rounded-sm text-[11px] sm:text-xs font-bold uppercase tracking-wide transition-colors",
                 filter === tab
                   ? "bg-primary text-white"
                   : "text-slate-muted hover:text-slate-text"
@@ -435,7 +437,7 @@ export default function BookingsTab() {
         >
           <h3 className="text-slate-text text-sm font-bold">New Booking</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className={labelClass}>Client Name *</label>
               <input
@@ -460,7 +462,7 @@ export default function BookingsTab() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <label className={labelClass}>Phone</label>
               <input
@@ -513,7 +515,7 @@ export default function BookingsTab() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <label className={labelClass}>Guest Count</label>
               <input
@@ -614,149 +616,147 @@ export default function BookingsTab() {
               return (
                 <div
                   key={booking.id}
-                  className="border border-sky-deep rounded-sm p-4 hover:border-primary/30 transition-colors"
+                  className="border border-sky-deep rounded-sm p-3 sm:p-4 hover:border-primary/30 transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-slate-text font-bold text-sm truncate">
-                          {booking.summary}
-                        </h3>
-                        <span
-                          className={cn(
-                            "inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border",
-                            statusBadgeStyles[booking.bookingStatus]
-                          )}
-                        >
-                          {booking.bookingStatus}
-                        </span>
-                      </div>
-
-                      {parsed.client && (
-                        <p className="text-slate-muted text-sm mb-2">{parsed.client}</p>
+                  {/* Title + status badge */}
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h3 className="text-slate-text font-bold text-sm leading-snug">
+                      {booking.summary}
+                    </h3>
+                    <span
+                      className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border flex-shrink-0",
+                        statusBadgeStyles[booking.bookingStatus]
                       )}
+                    >
+                      {booking.bookingStatus}
+                    </span>
+                  </div>
 
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-muted overflow-hidden">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={12} />
-                          {formatDateTime(booking.start)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} />
-                          {formatTime(booking.start)} - {formatTime(booking.end)}
-                        </span>
-                        {(booking.clientEmail || parsed.email) && (
-                          <a
-                            href={`mailto:${booking.clientEmail || parsed.email}`}
-                            className="flex items-center gap-1 truncate max-w-[200px] text-blue-600 hover:text-blue-800 underline underline-offset-2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Mail size={12} className="flex-shrink-0" />
-                            <span className="truncate">{booking.clientEmail || parsed.email}</span>
-                          </a>
-                        )}
-                        {(booking.clientPhone || parsed.phone) && (
-                          <a
-                            href={`tel:${booking.clientPhone || parsed.phone}`}
-                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 underline underline-offset-2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Phone size={12} />
-                            {booking.clientPhone || parsed.phone}
-                          </a>
-                        )}
-                        {parsed["guest count"] && (
-                          <span className="flex items-center gap-1">
-                            <Users size={12} />
-                            {parsed["guest count"]} guests
-                          </span>
-                        )}
-                        {booking.estimatedTotal != null && booking.estimatedTotal > 0 && (
-                          <span className="flex items-center gap-1 font-bold text-slate-text">
-                            <DollarSign size={12} />
-                            ${booking.estimatedTotal.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
+                  {parsed.client && (
+                    <p className="text-slate-muted text-sm mb-2">{parsed.client}</p>
+                  )}
 
-                      {booking.invoiceUrl && (
-                        <a
-                          href={booking.invoiceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:text-primary-dark font-bold"
-                        >
-                          <ExternalLink size={12} />
-                          View Invoice
-                        </a>
-                      )}
-
-                      {/* Meal info */}
-                      {(() => {
-                        const meal = parseMealInfo(booking.mealInfo);
-                        if (!meal) return null;
-                        return (
-                          <div className="mt-3 border border-sky-deep rounded-sm p-3 bg-sky/30">
-                            <div className="flex items-center gap-1.5 mb-2">
-                              <UtensilsCrossed size={13} className="text-primary" />
-                              <span className="text-xs font-bold text-slate-text">
-                                {meal.type === "preset"
-                                  ? `Specialty Meal: ${meal.presetName}`
-                                  : "Custom Menu"}
-                              </span>
-                              {meal.type === "preset" && meal.pricePerPerson != null && (
-                                <span className="text-xs text-slate-muted ml-1">
-                                  (${meal.pricePerPerson}/person)
-                                </span>
-                              )}
-                            </div>
-                            <ul className="space-y-0.5">
-                              {meal.items.map((item, idx) => (
-                                <li key={idx} className="flex items-center justify-between text-xs text-slate-muted">
-                                  <span>{item.name}</span>
-                                  <span className="font-medium">${item.pricePerPerson}/pp</span>
-                                </li>
-                              ))}
-                            </ul>
-                            {meal.type === "custom" && meal.items.length > 0 && (
-                              <div className="mt-2 pt-1.5 border-t border-sky-deep flex justify-between text-xs font-bold text-slate-text">
-                                <span>Total per person</span>
-                                <span>
-                                  ${meal.items.reduce((sum, i) => sum + i.pricePerPerson, 0).toFixed(2)}/pp
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Action buttons for pending bookings */}
-                    {booking.bookingStatus === "pending" && (
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => openApprovalModal(booking)}
-                          disabled={isActioning}
-                          className="flex items-center gap-1 px-4 py-2.5 bg-green-600 text-white rounded-sm text-xs font-bold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                        >
-                          {isActioning ? (
-                            <Loader2 className="animate-spin" size={14} />
-                          ) : (
-                            <Check size={14} />
-                          )}
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleReject(booking.id)}
-                          disabled={isActioning}
-                          className="flex items-center gap-1 px-4 py-2.5 bg-red-600 text-white rounded-sm text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
-                        >
-                          <X size={14} />
-                          Reject
-                        </button>
-                      </div>
+                  {/* Booking metadata — grid on mobile, inline on desktop */}
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-muted">
+                    <span className="flex items-center gap-1">
+                      <Calendar size={12} className="flex-shrink-0" />
+                      {formatDateTime(booking.start)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={12} className="flex-shrink-0" />
+                      {formatTime(booking.start)} - {formatTime(booking.end)}
+                    </span>
+                    {(booking.clientEmail || parsed.email) && (
+                      <a
+                        href={`mailto:${booking.clientEmail || parsed.email}`}
+                        className="flex items-center gap-1 min-w-0 text-blue-600 hover:text-blue-800 underline underline-offset-2 col-span-2 sm:col-span-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Mail size={12} className="flex-shrink-0" />
+                        <span className="truncate">{booking.clientEmail || parsed.email}</span>
+                      </a>
+                    )}
+                    {(booking.clientPhone || parsed.phone) && (
+                      <a
+                        href={`tel:${booking.clientPhone || parsed.phone}`}
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Phone size={12} className="flex-shrink-0" />
+                        {booking.clientPhone || parsed.phone}
+                      </a>
+                    )}
+                    {parsed["guest count"] && (
+                      <span className="flex items-center gap-1">
+                        <Users size={12} className="flex-shrink-0" />
+                        {parsed["guest count"]} guests
+                      </span>
+                    )}
+                    {booking.estimatedTotal != null && booking.estimatedTotal > 0 && (
+                      <span className="flex items-center gap-1 font-bold text-slate-text">
+                        <DollarSign size={12} className="flex-shrink-0" />
+                        ${booking.estimatedTotal.toFixed(2)}
+                      </span>
                     )}
                   </div>
+
+                  {booking.invoiceUrl && (
+                    <a
+                      href={booking.invoiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:text-primary-dark font-bold"
+                    >
+                      <ExternalLink size={12} />
+                      View Invoice
+                    </a>
+                  )}
+
+                  {/* Meal info */}
+                  {(() => {
+                    const meal = parseMealInfo(booking.mealInfo);
+                    if (!meal) return null;
+                    return (
+                      <div className="mt-3 border border-sky-deep rounded-sm p-2.5 sm:p-3 bg-sky/30">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                          <UtensilsCrossed size={13} className="text-primary flex-shrink-0" />
+                          <span className="text-xs font-bold text-slate-text">
+                            {meal.type === "preset"
+                              ? `Specialty Meal: ${meal.presetName}`
+                              : "Custom Menu"}
+                          </span>
+                          {meal.type === "preset" && meal.pricePerPerson != null && (
+                            <span className="text-xs text-slate-muted">
+                              (${meal.pricePerPerson}/person)
+                            </span>
+                          )}
+                        </div>
+                        <ul className="space-y-0.5">
+                          {meal.items.map((item, idx) => (
+                            <li key={idx} className="flex items-center justify-between gap-2 text-xs text-slate-muted">
+                              <span className="min-w-0 break-words">{item.name}</span>
+                              <span className="font-medium flex-shrink-0">${item.pricePerPerson}/pp</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {meal.type === "custom" && meal.items.length > 0 && (
+                          <div className="mt-2 pt-1.5 border-t border-sky-deep flex justify-between text-xs font-bold text-slate-text">
+                            <span>Total per person</span>
+                            <span>
+                              ${meal.items.reduce((sum, i) => sum + i.pricePerPerson, 0).toFixed(2)}/pp
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Action buttons for pending bookings — full width on mobile */}
+                  {booking.bookingStatus === "pending" && (
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-sky-deep">
+                      <button
+                        onClick={() => openApprovalModal(booking)}
+                        disabled={isActioning}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2.5 bg-green-600 text-white rounded-sm text-xs font-bold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                      >
+                        {isActioning ? (
+                          <Loader2 className="animate-spin" size={14} />
+                        ) : (
+                          <Check size={14} />
+                        )}
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleReject(booking.id)}
+                        disabled={isActioning}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2.5 bg-red-600 text-white rounded-sm text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                      >
+                        <X size={14} />
+                        Reject
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -767,11 +767,11 @@ export default function BookingsTab() {
       {/* Approval Modal */}
       {approvalModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
           onClick={() => setApprovalModal(null)}
         >
           <div
-            className="bg-white rounded-sm shadow-xl w-full max-w-md mx-4 p-6 border border-sky-deep"
+            className="bg-white rounded-t-lg sm:rounded-sm shadow-xl w-full sm:max-w-md sm:mx-4 p-4 sm:p-6 border border-sky-deep max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-slate-text text-sm font-bold mb-1">Approve Booking</h3>
@@ -834,17 +834,17 @@ export default function BookingsTab() {
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-3">
                 <button
                   onClick={() => setApprovalModal(null)}
-                  className="flex-1 border border-sky-deep text-slate-muted text-xs font-bold uppercase tracking-wide px-4 py-3 rounded-sm hover:bg-sky/50 transition-colors"
+                  className="flex-1 border border-sky-deep text-slate-muted text-xs font-bold uppercase tracking-wide px-4 py-3.5 sm:py-3 rounded-sm hover:bg-sky/50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleApprove}
                   disabled={actionLoading === approvalModal.booking.id}
-                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white text-xs font-bold uppercase tracking-wide px-4 py-3 rounded-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white text-xs font-bold uppercase tracking-wide px-4 py-3.5 sm:py-3 rounded-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
                 >
                   {actionLoading === approvalModal.booking.id ? (
                     <>

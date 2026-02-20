@@ -47,10 +47,9 @@ export async function saveCredentials(
   });
 }
 
-// Get the Google refresh token (stored credentials > env var fallback)
+// Get the Google refresh token from env var (calendar/gmail scopes are set up manually)
 export async function getGoogleRefreshToken(): Promise<string> {
-  const creds = await getCredentials();
-  return creds.google?.refreshToken || process.env.GOOGLE_REFRESH_TOKEN || "";
+  return process.env.GOOGLE_REFRESH_TOKEN || "";
 }
 
 // Get the Square access token (stored credentials > env var fallback)

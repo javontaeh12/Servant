@@ -82,6 +82,16 @@ export default function PricingTab() {
         body: JSON.stringify(config),
       });
       if (res.ok) {
+        const data = await res.json();
+        if (data.saved) {
+          const merged = { ...data.saved.eventTypes };
+          for (const name of SPECIALTY_NAMES) {
+            if (!(name in merged)) {
+              merged[name] = DEFAULT_ENTRY;
+            }
+          }
+          setConfig({ ...data.saved, eventTypes: merged });
+        }
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
       } else {
