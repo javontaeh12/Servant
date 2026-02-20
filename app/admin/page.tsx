@@ -129,28 +129,32 @@ function AdminContent() {
         )}
 
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-sky-deep mb-8 overflow-x-auto">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                title={tab.label}
-                aria-label={tab.label}
-                className={cn(
-                  "flex items-center gap-1 md:gap-2 px-3 md:px-5 py-3 text-xs font-bold tracking-[0.1em] uppercase transition-all border-b-2 whitespace-nowrap",
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-muted hover:text-slate-text"
-                )}
-              >
-                <Icon size={16} />
-                <span className="hidden md:inline">{tab.label}</span>
-              </button>
-            );
-          })}
+        <div className="relative">
+          <div className="flex gap-1 border-b border-sky-deep mb-8 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  title={tab.label}
+                  aria-label={tab.label}
+                  className={cn(
+                    "flex items-center gap-1 px-2 sm:px-3 md:px-5 py-3 text-[10px] sm:text-xs font-bold tracking-[0.05em] sm:tracking-[0.1em] uppercase transition-all border-b-2 whitespace-nowrap snap-start",
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-slate-muted hover:text-slate-text"
+                  )}
+                >
+                  <Icon size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Scroll fade hint on right edge */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden" />
         </div>
 
         {/* Tab content */}

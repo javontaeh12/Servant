@@ -94,7 +94,7 @@ export default function QuoteForm() {
       .then((res) => res.json())
       .then((data) => setPricing(data))
       .catch(() => {});
-    fetch("/api/menu")
+    fetch("/api/menu", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => setMenuConfig(data))
       .catch(() => {});
@@ -329,25 +329,25 @@ export default function QuoteForm() {
   return (
     <div className="max-w-xl mx-auto pb-28">
       {/* Step indicators */}
-      <div className="flex items-center justify-center gap-0 mb-12">
+      <div className="flex items-center justify-center gap-0 mb-4 md:mb-12">
         {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
           <div key={s} className="flex items-center">
             <div
               className={cn(
-                "w-9 h-9 flex items-center justify-center text-xs font-bold transition-all rounded-full",
+                "w-7 h-7 md:w-9 md:h-9 flex items-center justify-center text-[10px] md:text-xs font-bold transition-all rounded-full",
                 s === step
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-white ring-2 ring-primary/30 ring-offset-2"
                   : s < step
                   ? "bg-primary/20 text-primary"
                   : "bg-sky-deep text-slate-muted/40"
               )}
             >
-              {s < step ? <Check size={14} /> : s}
+              {s < step ? <Check size={12} className="md:w-3.5 md:h-3.5" /> : s}
             </div>
             {s < TOTAL_STEPS && (
               <div
                 className={cn(
-                  "w-4 md:w-8 h-[1px] transition-all",
+                  "w-3 md:w-8 h-[1px] transition-all",
                   s < step ? "bg-primary/30" : "bg-sky-deep"
                 )}
               />
@@ -357,11 +357,11 @@ export default function QuoteForm() {
       </div>
 
       {/* Step label */}
-      <div className="text-center mb-10">
-        <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-1">
+      <div className="text-center mb-8 md:mb-10">
+        <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase mb-1.5">
           Step {step} of {TOTAL_STEPS}
         </p>
-        <h3 className="font-heading text-xl text-slate-text">
+        <h3 className="font-heading text-lg md:text-xl text-slate-text">
           {STEP_LABELS[step - 1]}
         </h3>
       </div>
@@ -1099,12 +1099,12 @@ export default function QuoteForm() {
 
       {/* Sticky running total */}
       {estimate && (
-        <div className="fixed bottom-[4.5rem] md:bottom-0 left-0 right-0 bg-white border-t border-sky-deep shadow-lg z-40">
+        <div className="fixed bottom-[4.5rem] md:bottom-0 left-0 right-0 bg-white border-t border-sky-deep shadow-lg z-40 quote-sticky-total">
           <div className="max-w-xl mx-auto px-6">
             <button
               type="button"
               onClick={() => setBreakdownOpen(!breakdownOpen)}
-              className="w-full flex items-center justify-between py-4"
+              className="w-full flex items-center justify-between py-4 landscape:py-2"
             >
               <div className="flex items-center gap-2">
                 <DollarSign size={16} className="text-primary" />
@@ -1125,7 +1125,7 @@ export default function QuoteForm() {
             </button>
 
             {breakdownOpen && (
-              <div className="pb-4 border-t border-sky-deep pt-3 space-y-2 text-sm">
+              <div className="pb-4 border-t border-sky-deep pt-3 space-y-2 text-sm breakdown">
                 <div className="flex justify-between">
                   <span className="text-slate-muted">
                     {form.eventType}{" "}

@@ -92,7 +92,7 @@ export default function GalleryLightbox({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="relative max-w-[90vw] max-h-[85vh] w-full h-full flex items-center justify-center"
+            className="relative max-w-[90vw] max-h-[85vh] landscape:max-h-[80vh] w-full h-full flex items-center justify-center lightbox-image"
             onClick={(e) => e.stopPropagation()}
           >
             <Image

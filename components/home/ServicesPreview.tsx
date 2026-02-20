@@ -137,17 +137,22 @@ export default function ServicesPreview() {
       {/* Modal */}
       {fullService && previewIcon && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:px-4"
           onClick={() => setSelectedService(null)}
         >
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-          {/* Modal content */}
+          {/* Modal content — full height on mobile, centered card on desktop */}
           <div
-            className="relative bg-white rounded-sm shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto animate-fade-up"
+            className="relative bg-white rounded-t-xl md:rounded-sm shadow-2xl w-full md:max-w-lg max-h-[90vh] md:max-h-[85vh] overflow-y-auto animate-fade-up"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Drag handle for mobile */}
+            <div className="md:hidden flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-slate-muted/20 rounded-full" />
+            </div>
+
             {/* Header */}
             <div className="relative bg-sky p-6 pb-5 border-b border-sky-deep">
               <button
@@ -197,7 +202,7 @@ export default function ServicesPreview() {
                 </ul>
               </div>
 
-              <div className="mt-8">
+              <div className="mt-8 pb-safe">
                 <Link
                   href="/quote"
                   className="inline-block w-full text-center bg-primary text-white font-heading font-bold text-xs tracking-[0.15em] uppercase px-6 py-3.5 rounded-sm hover:bg-primary-dark transition-all duration-300"
