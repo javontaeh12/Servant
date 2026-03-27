@@ -40,7 +40,6 @@ const TIMEZONE = process.env.BUSINESS_TIMEZONE || "America/New_York";
 // Business hours: 9 AM to 7 PM, 1-hour slots
 const BUSINESS_START_HOUR = 9;
 const BUSINESS_END_HOUR = 19;
-const SLOT_DURATION_MINUTES = 60;
 
 /**
  * Convert a date + time in a specific timezone to a UTC Date.

@@ -7,7 +7,6 @@ import {
   Home,
   Menu,
   X,
-  FileText,
   Phone,
   Info,
   UtensilsCrossed,

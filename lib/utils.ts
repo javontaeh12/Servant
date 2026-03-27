@@ -20,6 +20,6 @@ export function formatTime(isoString: string): string {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-    timeZone: "America/Chicago",
+    timeZone: "America/New_York",
   });
 }

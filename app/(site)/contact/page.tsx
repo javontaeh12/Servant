@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import ContactForm from "@/components/contact/ContactForm";
 import { readBusiness } from "@/lib/business-storage";
+
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with I'm A Servant First LLC. Call, email, or send us a message to discuss your upcoming event or ask about our catering services.",
+};
 
 // TikTok icon
 function TikTokIcon({ size = 18, className = "" }: { size?: number; className?: string }) {

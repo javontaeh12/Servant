@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { HandHeart, Home, ChefHat, Sparkles } from "lucide-react";
 import Image from "next/image";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { VALUES } from "@/lib/constants";
 import { readBusiness } from "@/lib/business-storage";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "Learn about I'm A Servant First LLC — our story, mission, and the passion behind our premium southern catering. Serving with purpose at every event.",
+};
 
 const ICON_MAP: Record<string, React.ElementType> = {
   HandHeart,

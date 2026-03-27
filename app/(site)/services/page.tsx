@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -16,6 +17,12 @@ import {
 } from "lucide-react";
 import { SERVICES } from "@/lib/constants";
 import { readSpecialtyImages } from "@/lib/specialty-storage";
+
+export const metadata: Metadata = {
+  title: "Our Specialties",
+  description:
+    "Explore our catering specialties — weddings, corporate events, private parties, and more. Premium southern cuisine tailored to your occasion.",
+};
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Heart,

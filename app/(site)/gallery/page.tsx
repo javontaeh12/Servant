@@ -1,6 +1,12 @@
-import { GalleryConfig } from "@/lib/types";
+import type { Metadata } from "next";
 import { readGallery } from "@/lib/gallery-storage";
 import GalleryGrid from "@/components/gallery/GalleryGrid";
+
+export const metadata: Metadata = {
+  title: "Gallery",
+  description:
+    "Browse our gallery of signature dishes, elegant catering setups, and events we've brought to life. See why clients trust I'm A Servant First LLC.",
+};
 
 export const dynamic = "force-dynamic";
 

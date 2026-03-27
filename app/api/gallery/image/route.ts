@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put, del, list } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
