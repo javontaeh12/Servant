@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   ConciergeBell,
   Users,
@@ -5,48 +8,60 @@ import {
   Utensils,
   Wine,
   Flame,
+  UtensilsCrossed,
+  Loader2,
+  type LucideIcon,
 } from "lucide-react";
+import { PricingConfig } from "@/lib/types";
 
-const ADD_ONS = [
-  {
-    name: "Buffet Style",
-    description:
-      "A generous spread where guests serve themselves from beautifully arranged stations featuring our signature southern dishes.",
-    icon: ChefHat,
-  },
-  {
-    name: "Family Style",
-    description:
-      "Platters served directly to your table so guests can share and pass dishes — just like Sunday dinner at home.",
-    icon: Users,
-  },
-  {
-    name: "Table & Waiter Service",
-    description:
-      "Full-service plated dining with dedicated waitstaff for an elevated, fine-dining experience at your event.",
-    icon: ConciergeBell,
-  },
-  {
-    name: "Cocktail Hour Bites",
-    description:
-      "Passed hors d'oeuvres and small bites perfect for mingling — a sophisticated start to any celebration.",
-    icon: Wine,
-  },
-  {
-    name: "Carving & Live Stations",
-    description:
-      "Interactive chef-attended stations featuring carved meats, made-to-order sides, and live cooking displays.",
-    icon: Flame,
-  },
-  {
-    name: "Custom Plating",
-    description:
-      "Individually plated courses designed and presented with artful attention to detail for an upscale touch.",
-    icon: Utensils,
-  },
-];
+// Icon mapping for known service style keywords
+const ICON_MAP: Record<string, LucideIcon> = {
+  buffet: ChefHat,
+  family: Users,
+  plated: ConciergeBell,
+  waiter: ConciergeBell,
+  cocktail: Wine,
+  appetizer: Wine,
+  carving: Flame,
+  station: Flame,
+  dessert: Utensils,
+  custom: UtensilsCrossed,
+};
+
+function getIconForStyle(name: string): LucideIcon {
+  const lower = name.toLowerCase();
+  for (const [keyword, icon] of Object.entries(ICON_MAP)) {
+    if (lower.includes(keyword)) return icon;
+  }
+  return UtensilsCrossed;
+}
 
 export default function CateringAddOns() {
+  const [styles, setStyles] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then((res) => res.json())
+      .then((data: PricingConfig) => {
+        setStyles(Object.keys(data.serviceStyles || {}));
+      })
+      .catch(() => setStyles([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-24 md:py-32 px-6 sm:px-8 bg-sky/50">
+        <div className="flex justify-center">
+          <Loader2 className="animate-spin text-primary" size={32} />
+        </div>
+      </section>
+    );
+  }
+
+  if (styles.length === 0) return null;
+
   return (
     <section className="py-24 md:py-32 px-6 sm:px-8 bg-sky/50">
       <div className="max-w-6xl mx-auto">
@@ -66,25 +81,25 @@ export default function CateringAddOns() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {ADD_ONS.map((addon) => (
-            <div
-              key={addon.name}
-              className="group relative bg-white border border-sky-deep/50 p-8 lg:p-10 hover:border-primary/30 hover:shadow-lg transition-all duration-500 rounded-sm"
-            >
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <addon.icon
-                className="text-primary mb-6"
-                size={32}
-                strokeWidth={1.5}
-              />
-              <h3 className="font-heading text-xl lg:text-2xl font-bold text-slate-text mb-3">
-                {addon.name}
-              </h3>
-              <p className="text-slate-muted text-sm leading-relaxed">
-                {addon.description}
-              </p>
-            </div>
-          ))}
+          {styles.map((name) => {
+            const Icon = getIconForStyle(name);
+            return (
+              <div
+                key={name}
+                className="group relative bg-white border border-sky-deep/50 p-8 lg:p-10 hover:border-primary/30 hover:shadow-lg transition-all duration-500 rounded-sm"
+              >
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <Icon
+                  className="text-primary mb-6"
+                  size={32}
+                  strokeWidth={1.5}
+                />
+                <h3 className="font-heading text-xl lg:text-2xl font-bold text-slate-text">
+                  {name}
+                </h3>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

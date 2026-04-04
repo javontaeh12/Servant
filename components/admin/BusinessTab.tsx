@@ -268,6 +268,7 @@ export default function BusinessTab() {
                 <button
                   onClick={() => removeParagraph(index)}
                   className="p-2 -m-2 text-red-400 hover:text-red-600 transition-colors self-start mt-2"
+                  aria-label="Remove paragraph"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -299,6 +300,7 @@ export default function BusinessTab() {
             <button
               onClick={removeImage}
               className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+              aria-label="Remove about page image"
             >
               <X size={14} />
             </button>

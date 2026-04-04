@@ -20,6 +20,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const BookingsTab = dynamic(() => import("@/components/admin/BookingsTab"));
 const PaymentsTab = dynamic(() => import("@/components/admin/PaymentsTab"));
@@ -297,14 +298,16 @@ function AdminContent() {
 
 export default function AdminPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <Loader2 className="animate-spin text-primary" size={32} />
-        </div>
-      }
-    >
-      <AdminContent />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <Loader2 className="animate-spin text-primary" size={32} />
+          </div>
+        }
+      >
+        <AdminContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

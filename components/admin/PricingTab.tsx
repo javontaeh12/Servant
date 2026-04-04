@@ -330,6 +330,7 @@ export default function PricingTab() {
                   <button
                     onClick={() => removeEventType(key)}
                     className="p-2 -m-1 text-red-400 hover:text-red-600 transition-colors"
+                    aria-label={`Remove event type ${key}`}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -409,6 +410,7 @@ export default function PricingTab() {
                 <button
                   onClick={() => removeServiceStyle(key)}
                   className="p-2 -m-1 text-red-400 hover:text-red-600 transition-colors"
+                  aria-label={`Remove service style ${key}`}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -509,6 +511,7 @@ export default function PricingTab() {
                 <button
                   onClick={() => removeAddOn(index)}
                   className="p-2 -m-2 text-red-400 hover:text-red-600 transition-colors mt-6"
+                  aria-label={`Remove add-on ${addOn.name || ""}`}
                 >
                   <Trash2 size={18} />
                 </button>

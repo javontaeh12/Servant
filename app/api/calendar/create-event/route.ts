@@ -16,10 +16,14 @@ export async function POST(request: NextRequest) {
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
-    if (!checkRateLimit(`create-event:${ip}`, 5, 60000)) {
+    const rateLimitResult = checkRateLimit(`create-event:${ip}`, 5, 60000);
+    if (!rateLimitResult.allowed) {
       return NextResponse.json(
         { success: false, error: "Too many requests. Please try again later." },
-        { status: 429 }
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimitResult.retryAfterSeconds) },
+        }
       );
     }
 
@@ -47,6 +51,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate mealSelection shape if provided
+    let validatedMealSelection: MealSelection | undefined;
+    if (mealSelection != null) {
+      if (
+        typeof mealSelection !== "object" ||
+        (mealSelection.type !== "preset" && mealSelection.type !== "custom")
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Invalid mealSelection: must be an object with type "preset" or "custom".',
+          },
+          { status: 400 }
+        );
+      }
+      if (
+        mealSelection.type === "preset" &&
+        mealSelection.presetMealId !== undefined &&
+        typeof mealSelection.presetMealId !== "string"
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Invalid mealSelection: presetMealId must be a string when provided.",
+          },
+          { status: 400 }
+        );
+      }
+      if (
+        mealSelection.type === "custom" &&
+        mealSelection.selectedItemIds !== undefined &&
+        (!Array.isArray(mealSelection.selectedItemIds) ||
+          !mealSelection.selectedItemIds.every(
+            (id: unknown) => typeof id === "string"
+          ))
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Invalid mealSelection: selectedItemIds must be an array of strings when provided.",
+          },
+          { status: 400 }
+        );
+      }
+      validatedMealSelection = mealSelection as MealSelection;
+    }
+
     // Server-side price recalculation
     let estimate = null;
     let pricing = null;
@@ -60,7 +114,7 @@ export async function POST(request: NextRequest) {
         serviceType || "",
         guestCount || 0,
         selectedAddOns || [],
-        (mealSelection as MealSelection) || undefined,
+        validatedMealSelection,
         menuConfig || undefined
       );
     } catch {
@@ -70,8 +124,8 @@ export async function POST(request: NextRequest) {
     // Build meal description for calendar event + structured mealInfo JSON
     let mealDescription = "";
     let mealInfoJson = "";
-    if (mealSelection && menuConfig) {
-      const ms = mealSelection as MealSelection;
+    if (validatedMealSelection && menuConfig) {
+      const ms = validatedMealSelection;
       if (ms.type === "preset" && ms.presetMealId) {
         const preset = menuConfig.presetMeals.find(
           (p) => p.id === ms.presetMealId

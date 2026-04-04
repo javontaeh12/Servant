@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     siteName: "I'm A Servant First LLC",
     images: [
       {
-        url: "/logo.png",
+        url: "/logo.webp",
         width: 800,
         height: 800,
         alt: "I'm A Servant First LLC Logo",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title: "I'm A Servant First LLC | Premium Southern Catering",
     description:
       "Upscale southern catering for weddings, corporate events, and private gatherings.",
-    images: ["/logo.png"],
+    images: ["/logo.webp"],
   },
 };
 

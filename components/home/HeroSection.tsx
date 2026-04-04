@@ -7,7 +7,7 @@ export default function HeroSection() {
       <div className="relative z-10 text-center px-6 sm:px-8 max-w-5xl mx-auto">
         <div className="animate-fade-in-delay-1 mb-20">
           <Image
-            src="/logo.png"
+            src="/logo.webp"
             alt="I'm A Servant First LLC - Catering Services"
             width={700}
             height={350}

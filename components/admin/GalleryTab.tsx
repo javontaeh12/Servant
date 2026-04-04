@@ -253,6 +253,7 @@ export default function GalleryTab() {
             <button
               onClick={cancelUpload}
               className="text-slate-muted hover:text-slate-text transition-colors"
+              aria-label="Cancel upload"
             >
               <X size={18} />
             </button>
@@ -281,6 +282,7 @@ export default function GalleryTab() {
                           removeSelectedFile(i);
                         }}
                         className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={`Remove preview ${i + 1}`}
                       >
                         <X size={12} />
                       </button>
@@ -388,6 +390,7 @@ export default function GalleryTab() {
                       onClick={saveCaptionEdit}
                       disabled={saving}
                       className="p-2 text-green-600 hover:bg-green-50 rounded-sm transition-colors"
+                      aria-label="Save caption"
                     >
                       {saving ? (
                         <Loader2 className="animate-spin" size={16} />
@@ -398,6 +401,7 @@ export default function GalleryTab() {
                     <button
                       onClick={() => setEditingId(null)}
                       className="p-2 text-slate-muted hover:bg-sky/50 rounded-sm transition-colors"
+                      aria-label="Cancel caption edit"
                     >
                       <X size={16} />
                     </button>
@@ -412,6 +416,7 @@ export default function GalleryTab() {
                     <button
                       onClick={() => startEditCaption(image)}
                       className="p-1 text-slate-muted hover:text-primary rounded-sm transition-colors flex-shrink-0"
+                      aria-label="Edit caption"
                     >
                       <Pencil size={14} />
                     </button>
@@ -429,6 +434,7 @@ export default function GalleryTab() {
                     disabled={index === 0 || saving}
                     className="p-1.5 text-slate-muted hover:text-primary hover:bg-sky/50 rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     title="Move up"
+                    aria-label="Move image up"
                   >
                     <ArrowUp size={16} />
                   </button>
@@ -437,6 +443,7 @@ export default function GalleryTab() {
                     disabled={index === images.length - 1 || saving}
                     className="p-1.5 text-slate-muted hover:text-primary hover:bg-sky/50 rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     title="Move down"
+                    aria-label="Move image down"
                   >
                     <ArrowDown size={16} />
                   </button>
@@ -446,6 +453,7 @@ export default function GalleryTab() {
                     disabled={deleting === image.id}
                     className="p-1.5 text-slate-muted hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors disabled:opacity-50"
                     title="Delete image"
+                    aria-label="Delete image"
                   >
                     {deleting === image.id ? (
                       <Loader2 className="animate-spin" size={16} />

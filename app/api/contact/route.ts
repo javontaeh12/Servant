@@ -10,10 +10,14 @@ export async function POST(request: NextRequest) {
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
-    if (!checkRateLimit(`contact:${ip}`, 3, 60000)) {
+    const rateLimitResult = checkRateLimit(`contact:${ip}`, 3, 60000);
+    if (!rateLimitResult.allowed) {
       return NextResponse.json(
         { success: false, error: "Too many requests. Please try again later." },
-        { status: 429 }
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimitResult.retryAfterSeconds) },
+        }
       );
     }
 

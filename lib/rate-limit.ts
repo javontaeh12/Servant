@@ -12,27 +12,33 @@ if (typeof setInterval !== "undefined") {
   }, 60000).unref?.();
 }
 
+export type RateLimitResult =
+  | { allowed: true }
+  | { allowed: false; retryAfterSeconds: number };
+
 /**
  * Check if a request is within the rate limit.
- * Returns true if allowed, false if rate limited.
+ * Returns { allowed: true } if within limit,
+ * or { allowed: false, retryAfterSeconds } if rate limited.
  */
 export function checkRateLimit(
   key: string,
   limit: number,
   windowMs: number
-): boolean {
+): RateLimitResult {
   const now = Date.now();
   const entry = rateLimit.get(key);
 
   if (!entry || now > entry.resetAt) {
     rateLimit.set(key, { count: 1, resetAt: now + windowMs });
-    return true;
+    return { allowed: true };
   }
 
   if (entry.count >= limit) {
-    return false;
+    const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
+    return { allowed: false, retryAfterSeconds };
   }
 
   entry.count++;
-  return true;
+  return { allowed: true };
 }

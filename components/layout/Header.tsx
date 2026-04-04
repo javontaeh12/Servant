@@ -46,7 +46,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
           <Image
-            src="/logo.png"
+            src="/logo.webp"
             alt="I'm A Servant First LLC"
             width={160}
             height={80}

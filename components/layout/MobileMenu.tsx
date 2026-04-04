@@ -84,6 +84,9 @@ export default function MobileMenu() {
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 320 }}
               className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl md:hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+              role="dialog"
+              aria-label="Navigation menu"
+              aria-hidden={!open}
             >
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
@@ -98,6 +101,7 @@ export default function MobileMenu() {
                 <button
                   onClick={() => setOpen(false)}
                   className="p-1.5 rounded-full hover:bg-sky transition-colors text-slate-muted"
+                  aria-label="Close menu"
                 >
                   <X size={20} />
                 </button>
@@ -194,6 +198,8 @@ export default function MobileMenu() {
           <button
             onClick={() => setOpen(true)}
             className="flex flex-col items-center justify-center pt-1.5 pb-1"
+            aria-expanded={open}
+            aria-label="Open navigation menu"
           >
             <Menu
               size={24}

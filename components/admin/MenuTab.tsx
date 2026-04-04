@@ -458,6 +458,7 @@ export default function MenuTab() {
         <button
           onClick={() => removeItem(index)}
           className="p-2 -m-2 text-red-400 hover:text-red-600 transition-colors mt-6"
+          aria-label="Remove menu item"
         >
           <Trash2 size={18} />
         </button>
@@ -573,6 +574,7 @@ export default function MenuTab() {
                     onClick={() => moveCategoryUp(realIndex)}
                     disabled={displayIndex === 0}
                     className="p-1.5 -m-1.5 text-slate-muted hover:text-primary disabled:opacity-20 transition-colors"
+                    aria-label="Move category up"
                   >
                     <ChevronUp size={16} />
                   </button>
@@ -580,6 +582,7 @@ export default function MenuTab() {
                     onClick={() => moveCategoryDown(realIndex)}
                     disabled={displayIndex === sortedCategories.length - 1}
                     className="p-1.5 -m-1.5 text-slate-muted hover:text-primary disabled:opacity-20 transition-colors"
+                    aria-label="Move category down"
                   >
                     <ChevronDown size={16} />
                   </button>
@@ -596,6 +599,7 @@ export default function MenuTab() {
                 <button
                   onClick={() => removeCategory(realIndex)}
                   className="p-2 -m-2 text-red-400 hover:text-red-600 transition-colors"
+                  aria-label="Remove category"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -690,6 +694,7 @@ export default function MenuTab() {
                 <button
                   onClick={() => removePresetMeal(index)}
                   className="p-2 -m-2 text-red-400 hover:text-red-600 transition-colors mt-6"
+                  aria-label="Remove preset meal"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -709,6 +714,7 @@ export default function MenuTab() {
                     <button
                       onClick={() => removeMealImage(index)}
                       className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      aria-label="Remove meal image"
                     >
                       <X size={12} />
                     </button>

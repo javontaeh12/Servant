@@ -329,9 +329,13 @@ export default function QuoteForm() {
   return (
     <div className="max-w-xl mx-auto pb-28">
       {/* Step indicators */}
-      <div className="flex items-center justify-center gap-0 mb-4 md:mb-12">
+      <div
+        className="flex items-center justify-center gap-0 mb-4 md:mb-12"
+        role="tablist"
+        aria-label="Quote form steps"
+      >
         {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
-          <div key={s} className="flex items-center">
+          <div key={s} className="flex items-center" role="tab" aria-selected={s === step} aria-current={s === step ? "step" : undefined}>
             <div
               className={cn(
                 "w-7 h-7 md:w-9 md:h-9 flex items-center justify-center text-[10px] md:text-xs font-bold transition-all rounded-full",
@@ -341,6 +345,7 @@ export default function QuoteForm() {
                   ? "bg-primary/20 text-primary"
                   : "bg-sky-deep text-slate-muted/40"
               )}
+              aria-label={`Step ${s}: ${STEP_LABELS[s - 1]}`}
             >
               {s < step ? <Check size={12} className="md:w-3.5 md:h-3.5" /> : s}
             </div>
