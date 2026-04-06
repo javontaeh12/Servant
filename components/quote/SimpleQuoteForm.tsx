@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2, CheckCircle2, ChefHat, ChevronDown, ChevronUp } from "lucide-react";
 
 const inputClass =
@@ -168,6 +168,15 @@ export default function SimpleQuoteForm() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSubmit, setShowSubmit] = useState(false);
+
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({
+    contact: null,
+    event: null,
+    menu: null,
+    extra: null,
+  });
+  const submitRef = useRef<HTMLDivElement | null>(null);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -179,7 +188,7 @@ export default function SimpleQuoteForm() {
   const toggle = (key: string) =>
     setOpen((s) => ({ ...s, [key]: !s[key] }));
 
-  // Close current section and open the next one
+  // Close current section, open next, scroll to it
   const collapse = (key: string) => {
     const idx = SECTION_ORDER.indexOf(key);
     const next = SECTION_ORDER[idx + 1];
@@ -188,6 +197,17 @@ export default function SimpleQuoteForm() {
       [key]: false,
       ...(next ? { [next]: true } : {}),
     }));
+    setTimeout(() => {
+      if (next) {
+        sectionRefs.current[next]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        // Last section done — show submit and scroll to it
+        setShowSubmit(true);
+        setTimeout(() => {
+          submitRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
+      }
+    }, 50);
   };
 
   const set = (field: keyof FormState) => (
@@ -289,9 +309,30 @@ export default function SimpleQuoteForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-3">
+      {/* Submit area — appears at top after all sections completed */}
+      {showSubmit && (
+        <div ref={submitRef} className="mb-8 rounded-sm border border-primary/30 bg-primary/5 px-6 py-6 text-center">
+          <p className="text-slate-text font-heading font-bold text-lg mb-1">All done! Ready to submit?</p>
+          <p className="text-slate-muted text-sm mb-5">Review your sections above, then tap the button to send your request.</p>
+          <button
+            type="submit"
+            form="quote-form"
+            disabled={submitting}
+            className="w-full bg-primary text-white font-bold py-4 px-6 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-sm flex items-center justify-center gap-2 text-sm tracking-wide uppercase"
+          >
+            {submitting ? (
+              <><Loader2 size={16} className="animate-spin" />Sending Request…</>
+            ) : (
+              "Submit Quote Request"
+            )}
+          </button>
+        </div>
+      )}
+
+      <form id="quote-form" onSubmit={handleSubmit} noValidate className="space-y-3">
 
         {/* ── Contact Information ── */}
+        <div ref={(el) => { sectionRefs.current.contact = el; }}>
         <Section
           title="Contact Information"
           subtitle={open.contact ? "Your name, email, and phone number" : form.name ? `${form.name} · ${form.email}` : "Tap to fill in your details"}
@@ -315,8 +356,10 @@ export default function SimpleQuoteForm() {
             </div>
           </div>
         </Section>
+        </div>
 
         {/* ── Event Details ── */}
+        <div ref={(el) => { sectionRefs.current.event = el; }}>
         <Section
           title="Event Details"
           subtitle={open.event ? "Type, date, time, venue, and guest count" : form.eventType ? `${form.eventType}${form.eventDate ? ` · ${form.eventDate}` : ""}${form.guestCount ? ` · ${form.guestCount} guests` : ""}` : "Tap to fill in your event info"}
@@ -372,8 +415,10 @@ export default function SimpleQuoteForm() {
             </div>
           </div>
         </Section>
+        </div>
 
         {/* ── Menu & Food Preferences ── */}
+        <div ref={(el) => { sectionRefs.current.menu = el; }}>
         <Section
           title="Menu & Food Preferences"
           subtitle={open.menu ? "Cuisine type, dishes, and dietary needs" : form.cuisineType ? `${form.cuisineType}${form.dietaryRestrictions ? ` · ${form.dietaryRestrictions}` : ""}` : "Tap to share your food preferences"}
@@ -404,8 +449,10 @@ export default function SimpleQuoteForm() {
             </div>
           </div>
         </Section>
+        </div>
 
         {/* ── Additional Information ── */}
+        <div ref={(el) => { sectionRefs.current.extra = el; }}>
         <Section
           title="Additional Information"
           subtitle={open.extra ? "Budget, how you found us, and any special requests" : form.budget || form.notes ? [form.budget, form.notes].filter(Boolean).join(" · ") : "Tap to add any extra details"}
@@ -428,6 +475,7 @@ export default function SimpleQuoteForm() {
             </div>
           </div>
         </Section>
+        </div>
 
         {/* Error */}
         {error && (
@@ -436,18 +484,20 @@ export default function SimpleQuoteForm() {
           </p>
         )}
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-primary text-white font-bold py-4 px-6 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-sm flex items-center justify-center gap-2 text-sm tracking-wide uppercase mt-2"
-        >
-          {submitting ? (
-            <><Loader2 size={16} className="animate-spin" />Sending Request…</>
-          ) : (
-            "Submit Quote Request"
-          )}
-        </button>
+        {/* Submit — only visible until showSubmit banner appears */}
+        {!showSubmit && (
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full bg-primary text-white font-bold py-4 px-6 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed rounded-sm flex items-center justify-center gap-2 text-sm tracking-wide uppercase mt-2"
+          >
+            {submitting ? (
+              <><Loader2 size={16} className="animate-spin" />Sending Request…</>
+            ) : (
+              "Submit Quote Request"
+            )}
+          </button>
+        )}
       </form>
     </div>
   );
