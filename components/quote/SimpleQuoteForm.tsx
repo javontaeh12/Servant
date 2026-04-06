@@ -120,7 +120,7 @@ function Section({
   required?: boolean;
 }) {
   return (
-    <div className="border border-sky-deep rounded-sm overflow-hidden">
+    <div className="border border-sky-deep rounded-sm">
       <button
         type="button"
         onClick={onToggle}
@@ -139,7 +139,7 @@ function Section({
         <div className="relative px-5 pt-5 pb-10 bg-white border-t border-sky-deep">
           {children}
           {/* Floating collapse button */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-20">
             <button
               type="button"
               onClick={onToggle}
