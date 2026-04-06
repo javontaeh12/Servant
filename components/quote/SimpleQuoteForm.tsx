@@ -136,8 +136,18 @@ function Section({
         <ChevronIcon open={open} />
       </button>
       {open && (
-        <div className="px-5 py-5 bg-white border-t border-sky-deep">
+        <div className="px-5 pt-5 pb-3 bg-white border-t border-sky-deep">
           {children}
+          <div className="flex justify-center mt-4 pt-3 border-t border-sky-deep">
+            <button
+              type="button"
+              onClick={onToggle}
+              className="flex items-center gap-1 text-xs text-slate-muted hover:text-primary transition-colors py-1 px-3"
+            >
+              <ChevronUp size={14} />
+              Collapse
+            </button>
+          </div>
         </div>
       )}
     </div>
