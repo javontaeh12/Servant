@@ -15,6 +15,7 @@ import {
   Building2,
   Images,
   Sparkles,
+  ToggleLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const PricingTab = dynamic(() => import("@/components/admin/PricingTab"));
 const BusinessTab = dynamic(() => import("@/components/admin/BusinessTab"));
 const GalleryTab = dynamic(() => import("@/components/admin/GalleryTab"));
 const SpecialtiesTab = dynamic(() => import("@/components/admin/SpecialtiesTab"));
+const SiteSettingsTab = dynamic(() => import("@/components/admin/SiteSettingsTab"));
 
 const TABS = [
   { id: "bookings", label: "Bookings", icon: Calendar },
@@ -38,6 +40,7 @@ const TABS = [
   { id: "business", label: "Business", icon: Building2 },
   { id: "specialties", label: "Specialties", icon: Sparkles },
   { id: "gallery", label: "Gallery", icon: Images },
+  { id: "site-settings", label: "Site Settings", icon: ToggleLeft },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -291,6 +294,7 @@ function AdminContent() {
         {activeTab === "business" && <BusinessTab />}
         {activeTab === "specialties" && <SpecialtiesTab />}
         {activeTab === "gallery" && <GalleryTab />}
+        {activeTab === "site-settings" && <SiteSettingsTab />}
       </div>
     </div>
   );
