@@ -109,6 +109,7 @@ function Section({
   subtitle,
   open,
   onToggle,
+  onCollapse,
   children,
   required,
 }: {
@@ -116,6 +117,7 @@ function Section({
   subtitle: string;
   open: boolean;
   onToggle: () => void;
+  onCollapse: () => void;
   children: React.ReactNode;
   required?: boolean;
 }) {
@@ -138,11 +140,11 @@ function Section({
       {open && (
         <div className="relative px-5 pt-5 pb-10 bg-white border-t border-sky-deep">
           {children}
-          {/* Floating collapse button */}
+          {/* Floating collapse + advance button */}
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-20">
             <button
               type="button"
-              onClick={onToggle}
+              onClick={onCollapse}
               className="w-9 h-9 rounded-full bg-white border-2 border-primary flex items-center justify-center shadow-md hover:bg-primary hover:text-white text-primary transition-all"
               aria-label="Collapse section"
             >
@@ -172,8 +174,21 @@ export default function SimpleQuoteForm() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
+  const SECTION_ORDER = ["contact", "event", "menu", "extra"];
+
   const toggle = (key: string) =>
     setOpen((s) => ({ ...s, [key]: !s[key] }));
+
+  // Close current section and open the next one
+  const collapse = (key: string) => {
+    const idx = SECTION_ORDER.indexOf(key);
+    const next = SECTION_ORDER[idx + 1];
+    setOpen((s) => ({
+      ...s,
+      [key]: false,
+      ...(next ? { [next]: true } : {}),
+    }));
+  };
 
   const set = (field: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -282,6 +297,7 @@ export default function SimpleQuoteForm() {
           subtitle={open.contact ? "Your name, email, and phone number" : form.name ? `${form.name} · ${form.email}` : "Tap to fill in your details"}
           open={open.contact}
           onToggle={() => toggle("contact")}
+          onCollapse={() => collapse("contact")}
           required
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -306,6 +322,7 @@ export default function SimpleQuoteForm() {
           subtitle={open.event ? "Type, date, time, venue, and guest count" : form.eventType ? `${form.eventType}${form.eventDate ? ` · ${form.eventDate}` : ""}${form.guestCount ? ` · ${form.guestCount} guests` : ""}` : "Tap to fill in your event info"}
           open={open.event}
           onToggle={() => toggle("event")}
+          onCollapse={() => collapse("event")}
           required
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -362,6 +379,7 @@ export default function SimpleQuoteForm() {
           subtitle={open.menu ? "Cuisine type, dishes, and dietary needs" : form.cuisineType ? `${form.cuisineType}${form.dietaryRestrictions ? ` · ${form.dietaryRestrictions}` : ""}` : "Tap to share your food preferences"}
           open={open.menu}
           onToggle={() => toggle("menu")}
+          onCollapse={() => collapse("menu")}
         >
           <div className="grid grid-cols-1 gap-4">
             <div>
@@ -393,6 +411,7 @@ export default function SimpleQuoteForm() {
           subtitle={open.extra ? "Budget, how you found us, and any special requests" : form.budget || form.notes ? [form.budget, form.notes].filter(Boolean).join(" · ") : "Tap to add any extra details"}
           open={open.extra}
           onToggle={() => toggle("extra")}
+          onCollapse={() => collapse("extra")}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
