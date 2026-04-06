@@ -136,16 +136,17 @@ function Section({
         <ChevronIcon open={open} />
       </button>
       {open && (
-        <div className="px-5 pt-5 pb-3 bg-white border-t border-sky-deep">
+        <div className="relative px-5 pt-5 pb-10 bg-white border-t border-sky-deep">
           {children}
-          <div className="flex justify-center mt-4 pt-3 border-t border-sky-deep">
+          {/* Floating collapse button */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
             <button
               type="button"
               onClick={onToggle}
-              className="flex items-center gap-1 text-xs text-slate-muted hover:text-primary transition-colors py-1 px-3"
+              className="w-9 h-9 rounded-full bg-white border-2 border-primary flex items-center justify-center shadow-md hover:bg-primary hover:text-white text-primary transition-all"
+              aria-label="Collapse section"
             >
-              <ChevronUp size={14} />
-              Collapse
+              <ChevronUp size={16} />
             </button>
           </div>
         </div>
