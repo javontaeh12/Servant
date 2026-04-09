@@ -76,6 +76,7 @@ export async function POST(
       eventDate: eventDate || booking.eventDate,
       eventTime: booking.eventTime,
       eventType: eventType || booking.eventType,
+      bookingId: id,
       invoiceUrl: invoiceUrl || null,
       finalTotal: Number(finalTotal),
       depositAmount: Number(depositAmount),

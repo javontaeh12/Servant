@@ -11,8 +11,8 @@ export default function Home() {
   return (
     <>
       <HeroSection />
-      <ServicesPreview />
       <FeaturedImage />
+      <ServicesPreview />
       <CateringAddOns />
       <PopularMenus />
       <ServiceArea />

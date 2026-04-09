@@ -11,6 +11,7 @@ import {
   Images,
   Sparkles,
   ToggleLeft,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ type TabId = (typeof TABS)[number]["id"];
 function AdminContent() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("bookings");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [session, setSession] = useState<{
     email: string;
     name: string;
@@ -100,33 +102,59 @@ function AdminContent() {
           </div>
         </div>
 
-        {/* Tab bar */}
-        <div className="relative">
-          <div className="flex gap-1 border-b border-sky-deep mb-8 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  title={tab.label}
-                  aria-label={tab.label}
-                  className={cn(
-                    "flex items-center gap-1 px-2 sm:px-3 md:px-5 py-3 text-[10px] sm:text-xs font-bold tracking-[0.05em] sm:tracking-[0.1em] uppercase transition-all border-b-2 whitespace-nowrap snap-start",
-                    isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-slate-muted hover:text-slate-text"
-                  )}
-                >
-                  <Icon size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          {/* Scroll fade hint on right edge */}
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden" />
+        {/* Tab dropdown */}
+        <div className="relative mb-8">
+          <button
+            onClick={() => setDropdownOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-4 py-3 border border-sky-deep rounded-sm bg-white text-slate-text font-bold text-sm"
+          >
+            <span className="flex items-center gap-2">
+              {(() => {
+                const tab = TABS.find((t) => t.id === activeTab)!;
+                const Icon = tab.icon;
+                return (
+                  <>
+                    <Icon size={15} className="text-primary" />
+                    {tab.label}
+                  </>
+                );
+              })()}
+            </span>
+            <ChevronDown
+              size={16}
+              className={cn(
+                "text-slate-muted transition-transform duration-200",
+                dropdownOpen && "rotate-180"
+              )}
+            />
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-sky-deep rounded-sm shadow-lg overflow-hidden">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setDropdownOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-colors",
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-slate-muted hover:bg-gray-50 hover:text-slate-text"
+                    )}
+                  >
+                    <Icon size={15} className="flex-shrink-0" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Tab content */}

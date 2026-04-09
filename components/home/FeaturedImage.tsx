@@ -21,7 +21,7 @@ export default function FeaturedImage() {
   if (!settings?.featuredImage || !settings.featuredImageActive) return null;
 
   return (
-    <section className="px-6 sm:px-8 py-12 md:py-16 bg-white">
+    <section className="px-6 sm:px-8 pt-0 pb-12 md:pb-16 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="relative aspect-[16/7] overflow-hidden rounded-sm">
           <Image

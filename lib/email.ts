@@ -41,6 +41,48 @@ export async function sendEmail(
 
 // ========== Notification Templates ==========
 
+export async function notifyClientQuoteReceived(booking: {
+  clientName: string;
+  clientEmail: string;
+  eventDate: string;
+  eventTime: string;
+  eventType: string;
+  guestCount: number;
+}): Promise<void> {
+  const date = booking.eventDate
+    ? new Date(booking.eventDate + "T00:00:00").toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Date not specified";
+
+  await sendEmail(
+    booking.clientEmail,
+    `Quote Request Received - ${BUSINESS_NAME}`,
+    `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #1e293b; color: white; padding: 24px; text-align: center;">
+        <h1 style="margin: 0; font-size: 20px;">${BUSINESS_NAME}</h1>
+        <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Quote Request Received</p>
+      </div>
+      <div style="padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0;">
+        <p style="margin: 0 0 16px; font-size: 15px;">Hi ${booking.clientName.split(" ")[0]},</p>
+        <p style="margin: 0 0 16px; font-size: 15px;">Thank you for reaching out! We've received your quote request and will review it shortly. You'll hear back from us soon.</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <tr><td style="padding: 8px 0; color: #64748b; width: 120px;">Event</td><td style="padding: 8px 0; font-weight: 600;">${booking.eventType}</td></tr>
+          <tr><td style="padding: 8px 0; color: #64748b;">Date</td><td style="padding: 8px 0; font-weight: 600;">${date}</td></tr>
+          ${booking.eventTime ? `<tr><td style="padding: 8px 0; color: #64748b;">Time</td><td style="padding: 8px 0;">${booking.eventTime}</td></tr>` : ""}
+          ${booking.guestCount ? `<tr><td style="padding: 8px 0; color: #64748b;">Guests</td><td style="padding: 8px 0;">${booking.guestCount}</td></tr>` : ""}
+        </table>
+        <p style="margin: 24px 0 0; font-size: 13px; color: #94a3b8;">Questions in the meantime? Reply to this email or visit <a href="https://iasfcatering.com" style="color: #2563eb;">iasfcatering.com</a>.</p>
+      </div>
+    </div>
+    `
+  );
+}
+
 export async function notifyAdminNewBooking(booking: {
   clientName: string;
   clientEmail: string;
@@ -99,6 +141,7 @@ export async function notifyClientBookingConfirmed(booking: {
   eventDate: string;
   eventTime: string;
   eventType: string;
+  bookingId?: string;
   invoiceUrl?: string | null;
   finalTotal?: number;
   depositAmount?: number;
@@ -109,6 +152,14 @@ export async function notifyClientBookingConfirmed(booking: {
     day: "numeric",
     year: "numeric",
   });
+
+  const calendarSection = booking.bookingId
+    ? `<div style="margin-top: 24px; padding: 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px;">
+        <p style="margin: 0 0 8px; font-weight: 600; color: #1e40af;">Add to Your Calendar</p>
+        <p style="margin: 0 0 12px; font-size: 13px; color: #1e40af;">Save the date — tap the button to add this event to your calendar.</p>
+        <a href="https://iasfcatering.com/api/bookings/${booking.bookingId}/ical" style="display: inline-block; background: #2563eb; color: white; padding: 10px 24px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 14px;">Add to Calendar</a>
+      </div>`
+    : "";
 
   const invoiceSection = booking.invoiceUrl
     ? `<div style="margin-top: 24px; padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px;">
@@ -137,6 +188,7 @@ export async function notifyClientBookingConfirmed(booking: {
           <tr><td style="padding: 8px 0; color: #64748b;">Time</td><td style="padding: 8px 0;">${booking.eventTime}</td></tr>
         </table>
         ${invoiceSection}
+        ${calendarSection}
         <p style="margin: 24px 0 0; font-size: 13px; color: #94a3b8;">Questions? Reply to this email or call us directly.</p>
       </div>
     </div>
