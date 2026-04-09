@@ -1,4 +1,4 @@
-import { put, get } from "@vercel/blob";
+import { put, list } from "@vercel/blob";
 import { Booking, TimeSlot } from "./types";
 
 const BOOKINGS_PATH = "data/bookings.json";
@@ -11,10 +11,11 @@ const BUSINESS_END_HOUR = 19;
 
 export async function getBookings(): Promise<Booking[]> {
   try {
-    const result = await get(BOOKINGS_PATH, { access: "private" });
-    if (!result) return [];
-    const text = await new Response(result.stream).text();
-    return JSON.parse(text) as Booking[];
+    const { blobs } = await list({ prefix: BOOKINGS_PATH });
+    if (blobs.length === 0) return [];
+    const response = await fetch(blobs[0].url, { cache: "no-store" });
+    if (!response.ok) return [];
+    return (await response.json()) as Booking[];
   } catch {
     return [];
   }
@@ -22,7 +23,7 @@ export async function getBookings(): Promise<Booking[]> {
 
 async function saveBookings(bookings: Booking[]): Promise<void> {
   await put(BOOKINGS_PATH, JSON.stringify(bookings, null, 2), {
-    access: "private",
+    access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
     allowOverwrite: true,
@@ -40,10 +41,11 @@ export interface BlockedDate {
 
 export async function getBlockedDates(): Promise<BlockedDate[]> {
   try {
-    const result = await get(BLOCKED_DATES_PATH, { access: "private" });
-    if (!result) return [];
-    const text = await new Response(result.stream).text();
-    return JSON.parse(text) as BlockedDate[];
+    const { blobs } = await list({ prefix: BLOCKED_DATES_PATH });
+    if (blobs.length === 0) return [];
+    const response = await fetch(blobs[0].url, { cache: "no-store" });
+    if (!response.ok) return [];
+    return (await response.json()) as BlockedDate[];
   } catch {
     return [];
   }
@@ -51,7 +53,7 @@ export async function getBlockedDates(): Promise<BlockedDate[]> {
 
 async function saveBlockedDates(dates: BlockedDate[]): Promise<void> {
   await put(BLOCKED_DATES_PATH, JSON.stringify(dates, null, 2), {
-    access: "private",
+    access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
     allowOverwrite: true,
