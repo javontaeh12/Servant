@@ -1,19 +1,13 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const FROM_EMAIL = process.env.ADMIN_EMAIL || "imaservantfirst07@gmail.com";
+const FROM_NAME = "I'm A Servant First Catering";
 const BUSINESS_NAME = "I'm A Servant First Catering";
 
-function getTransporter() {
-  const appPassword = process.env.GMAIL_APP_PASSWORD;
-  if (!appPassword) return null;
-
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: FROM_EMAIL,
-      pass: appPassword,
-    },
-  });
+function getResend(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
 }
 
 export async function sendEmail(
@@ -21,15 +15,15 @@ export async function sendEmail(
   subject: string,
   html: string
 ): Promise<void> {
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn("[EMAIL] No GMAIL_APP_PASSWORD configured. Email not sent.");
+  const resend = getResend();
+  if (!resend) {
+    console.warn("[EMAIL] No RESEND_API_KEY configured. Email not sent.");
     return;
   }
 
   try {
-    await transporter.sendMail({
-      from: `"${BUSINESS_NAME}" <${FROM_EMAIL}>`,
+    await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to,
       subject,
       html,

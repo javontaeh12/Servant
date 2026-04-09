@@ -372,7 +372,7 @@ export default function BookingsTab() {
             </div>
           </div>
           <button
-            onClick={() => setFilter("pending")}
+            onClick={() => { setFilter("pending"); setViewMode("list"); }}
             className="bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-sm hover:bg-amber-700 transition-colors w-full sm:w-auto text-center"
           >
             View Pending
