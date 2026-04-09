@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Delete old featured image if exists
     const settings = await readSiteSettings();
-    if (settings.featuredImage) {
+    if (settings.featuredImage && settings.featuredImage.startsWith("https://")) {
       try {
         await del(settings.featuredImage);
       } catch {}
@@ -61,7 +61,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const settings = await readSiteSettings();
-    if (settings.featuredImage) {
+    if (settings.featuredImage && settings.featuredImage.startsWith("https://")) {
       try {
         await del(settings.featuredImage);
       } catch {}

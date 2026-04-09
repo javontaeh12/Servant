@@ -36,7 +36,10 @@ export async function writeSiteSettings(settings: SiteSettings): Promise<void> {
   );
   try {
     const { blobs } = await list({ prefix: SETTINGS_PREFIX });
-    const toDelete = blobs.filter((b) => b.url !== result.url).map((b) => b.url);
+    const toDelete = blobs
+      .filter((b) => b.url !== result.url)
+      .map((b) => b.url)
+      .filter((url) => url.startsWith("https://"));
     if (toDelete.length > 0) await del(toDelete);
   } catch {}
 }
