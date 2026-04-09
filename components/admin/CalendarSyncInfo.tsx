@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarDays, Copy, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function CalendarSyncInfo() {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [feedUrl, setFeedUrl] = useState("Loading...");
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://iasfcatering.com";
-  const feedUrl = `${baseUrl}/api/bookings/calendar.ics?token=YOUR_CRON_SECRET`;
+  useEffect(() => {
+    fetch("/api/admin/calendar-url")
+      .then((r) => r.json())
+      .then((data) => { if (data.url) setFeedUrl(data.url); })
+      .catch(() => setFeedUrl("Error loading URL — check CRON_SECRET in Vercel env vars"));
+  }, []);
 
   const handleCopy = async () => {
     try {
