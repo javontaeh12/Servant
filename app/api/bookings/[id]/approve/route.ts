@@ -38,7 +38,7 @@ export async function POST(
       );
     }
 
-    // Create Square invoice
+    // Create Square invoice (optional — booking is approved even if this fails)
     let invoiceId = "";
     let invoiceUrl = "";
     try {
@@ -54,11 +54,7 @@ export async function POST(
       invoiceId = invoiceResult.invoiceId;
       invoiceUrl = invoiceResult.invoiceUrl;
     } catch (invoiceError) {
-      console.error("Square invoice creation failed:", invoiceError);
-      return NextResponse.json(
-        { error: "Failed to create invoice. Check Square configuration." },
-        { status: 500 }
-      );
+      console.error("Square invoice creation failed (proceeding without invoice):", invoiceError);
     }
 
     // Update booking status
