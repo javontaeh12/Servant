@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateBookingStatus } from "@/lib/google-calendar";
+import { getBookingById, updateBooking } from "@/lib/bookings";
 import { createInvoiceForBooking } from "@/lib/square-invoice";
-import { sendEmail } from "@/lib/gmail";
-import { clientConfirmationEmail } from "@/lib/email-templates";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function POST(
@@ -14,7 +12,11 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id: eventId } = await params;
+  const { id } = await params;
+  const booking = await getBookingById(id);
+  if (!booking) {
+    return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+  }
 
   try {
     const body = await request.json();
@@ -25,18 +27,19 @@ export async function POST(
       clientName,
       eventType,
       eventDate,
-      guestCount,
       mealInfo,
     } = body;
 
     if (!finalTotal || !depositAmount || !clientEmail || !clientName) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    // 1. Create Square invoice
+    // Create Square invoice
     let invoiceId = "";
     let invoiceUrl = "";
-
     try {
       const invoiceResult = await createInvoiceForBooking({
         clientName,
@@ -57,36 +60,20 @@ export async function POST(
       );
     }
 
-    // 2. Update calendar event status to approved
-    await updateBookingStatus(eventId, "approved", {
-      estimatedTotal: String(finalTotal),
+    // Update booking status
+    await updateBooking(id, {
+      status: "approved",
+      estimatedTotal: Number(finalTotal),
       invoiceId,
       invoiceUrl,
     });
 
-    // 3. Send confirmation email to client (non-blocking)
-    try {
-      const { subject, html } = clientConfirmationEmail({
-        clientName,
-        eventType: eventType || "Catering Event",
-        eventDate: eventDate || "TBD",
-        guestCount: Number(guestCount || 0),
-        finalTotal: Number(finalTotal),
-        depositAmount: Number(depositAmount),
-        invoiceUrl,
-      });
-      await sendEmail(clientEmail, subject, html);
-    } catch (emailError) {
-      console.error("Failed to send client confirmation email:", emailError);
-    }
-
-    return NextResponse.json({
-      success: true,
-      invoiceId,
-      invoiceUrl,
-    });
+    return NextResponse.json({ success: true, invoiceId, invoiceUrl });
   } catch (error) {
     console.error("Approve booking error:", error);
-    return NextResponse.json({ error: "Failed to approve booking" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to approve booking" },
+      { status: 500 }
+    );
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendEmail } from "@/lib/gmail";
+import { sendEmail } from "@/lib/email";
 import { readBusiness } from "@/lib/business-storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/sanitize";

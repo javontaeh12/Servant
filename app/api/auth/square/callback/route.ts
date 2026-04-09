@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Store Square credentials
+    // Store Square credentials with who connected
     await saveCredentials({
       square: {
         accessToken: tokenData.access_token,
@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
         merchantId: tokenData.merchant_id,
         expiresAt: tokenData.expires_at,
         connectedAt: new Date().toISOString(),
+        connectedBy: session.email || "",
       },
     });
 

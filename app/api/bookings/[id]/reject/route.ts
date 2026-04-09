@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateBookingStatus } from "@/lib/google-calendar";
+import { getBookingById, updateBooking } from "@/lib/bookings";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function POST(
@@ -11,13 +11,20 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id: eventId } = await params;
+  const { id } = await params;
+  const booking = await getBookingById(id);
+  if (!booking) {
+    return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+  }
 
   try {
-    await updateBookingStatus(eventId, "rejected");
+    await updateBooking(id, { status: "rejected" });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Reject booking error:", error);
-    return NextResponse.json({ error: "Failed to reject booking" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to reject booking" },
+      { status: 500 }
+    );
   }
 }

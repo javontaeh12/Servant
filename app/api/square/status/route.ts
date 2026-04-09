@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
       connected: true,
       merchantId: creds.square.merchantId || null,
       connectedAt: creds.square.connectedAt,
+      connectedBy: creds.square.connectedBy || null,
     });
   }
 

@@ -129,24 +129,28 @@ export interface BusinessInfo {
   };
 }
 
-// Calendar
+// Bookings
 export type BookingStatus = "pending" | "approved" | "rejected";
 
-export interface CalendarBooking {
+export interface Booking {
   id: string;
-  summary: string;
-  description: string;
-  start: string;
-  end: string;
-  status: string;
-  created: string;
-  bookingStatus: BookingStatus;
-  clientEmail: string | null;
-  clientPhone: string | null;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  eventDate: string;
+  eventTime: string;
+  guestCount: number;
+  eventType: string;
+  serviceStyle: string;
+  dietaryNeeds: string;
+  notes: string;
+  status: BookingStatus;
   estimatedTotal: number | null;
   invoiceId: string | null;
   invoiceUrl: string | null;
   mealInfo: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Gallery

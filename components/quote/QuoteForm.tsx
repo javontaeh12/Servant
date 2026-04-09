@@ -134,7 +134,7 @@ export default function QuoteForm() {
 
     setSlotsLoading(true);
     try {
-      const res = await fetch(`/api/calendar/available-slots?date=${date}`);
+      const res = await fetch(`/api/bookings/available?date=${date}`);
       const data = await res.json();
       setAvailableSlots(data.slots || []);
     } catch {
@@ -161,7 +161,7 @@ export default function QuoteForm() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/calendar/create-event", {
+      const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

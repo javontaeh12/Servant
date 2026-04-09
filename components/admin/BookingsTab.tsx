@@ -20,13 +20,13 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CalendarBooking, BookingStatus, TimeSlot } from "@/lib/types";
+import { Booking, BookingStatus, TimeSlot } from "@/lib/types";
 import { EVENT_TYPES, SERVICE_STYLES } from "@/lib/constants";
 
 type FilterTab = "all" | BookingStatus;
 
 interface ApprovalModalData {
-  booking: CalendarBooking;
+  booking: Booking;
   finalTotal: string;
   depositAmount: string;
 }
@@ -35,39 +35,6 @@ const inputClass =
   "w-full bg-sky/50 border border-sky-deep text-slate-text px-4 py-3 focus:border-primary/50 focus:outline-none transition-colors text-sm rounded-sm";
 const labelClass =
   "block text-slate-muted text-xs font-bold tracking-wide uppercase mb-2";
-
-function parseBookingDescription(description: string) {
-  const lines = description.split("\n");
-  const data: Record<string, string> = {};
-  for (const line of lines) {
-    const match = line.match(/^[^\w]*(\w[\w\s]+?):\s*(.+)$/);
-    if (match) {
-      data[match[1].trim().toLowerCase()] = match[2].trim();
-    }
-  }
-  return data;
-}
-
-function formatDateTime(isoString: string) {
-  if (!isoString) return "";
-  const d = new Date(isoString);
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(isoString: string) {
-  if (!isoString) return "";
-  const d = new Date(isoString);
-  return d.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
 
 interface ParsedMealInfo {
   type: "preset" | "custom";
@@ -85,6 +52,17 @@ function parseMealInfo(raw: string | null): ParsedMealInfo | null {
   }
 }
 
+function formatDate(dateStr: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 const statusBadgeStyles: Record<BookingStatus, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
   approved: "bg-green-100 text-green-800 border-green-200",
@@ -92,7 +70,7 @@ const statusBadgeStyles: Record<BookingStatus, string> = {
 };
 
 export default function BookingsTab() {
-  const [bookings, setBookings] = useState<CalendarBooking[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterTab>("all");
@@ -123,7 +101,7 @@ export default function BookingsTab() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/calendar/bookings");
+      const res = await fetch("/api/bookings");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setBookings(data);
@@ -138,21 +116,17 @@ export default function BookingsTab() {
     fetchBookings();
   }, [fetchBookings]);
 
-  const pendingCount = bookings.filter((b) => b.bookingStatus === "pending").length;
+  const pendingCount = bookings.filter((b) => b.status === "pending").length;
   const filteredBookings = bookings.filter((b) => {
-    if (filter !== "all" && b.bookingStatus !== filter) return false;
+    if (filter !== "all" && b.status !== filter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const parsed = parseBookingDescription(b.description);
       const searchable = [
-        b.summary,
+        b.clientName,
         b.clientEmail,
         b.clientPhone,
-        parsed.client,
-        parsed.email,
-        parsed.phone,
-        parsed["event type"],
-        parsed["service style"],
+        b.eventType,
+        b.serviceStyle,
       ]
         .filter(Boolean)
         .join(" ")
@@ -183,7 +157,7 @@ export default function BookingsTab() {
 
     setLoadingSlots(true);
     try {
-      const res = await fetch(`/api/calendar/available-slots?date=${date}`);
+      const res = await fetch(`/api/bookings/available?date=${date}`);
       if (res.ok) {
         const data = await res.json();
         setAvailableSlots(data.slots || []);
@@ -202,7 +176,7 @@ export default function BookingsTab() {
     setSubmitSuccess(null);
 
     try {
-      const res = await fetch("/api/calendar/create-event", {
+      const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -237,7 +211,7 @@ export default function BookingsTab() {
     }
   };
 
-  function openApprovalModal(booking: CalendarBooking) {
+  function openApprovalModal(booking: Booking) {
     setApprovalModal({
       booking,
       finalTotal: booking.estimatedTotal ? String(booking.estimatedTotal) : "",
@@ -257,21 +231,19 @@ export default function BookingsTab() {
     if (!total || total <= 0) return;
     if (!deposit || deposit <= 0 || deposit > total) return;
 
-    const parsed = parseBookingDescription(booking.description);
-
     setActionLoading(booking.id);
     try {
-      const res = await fetch(`/api/calendar/bookings/${booking.id}/approve`, {
+      const res = await fetch(`/api/bookings/${booking.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           finalTotal: total,
           depositAmount: deposit,
-          clientEmail: booking.clientEmail || parsed.email || "",
-          clientName: parsed.client || booking.summary.split(" - ")[1]?.split(" - ")[0] || "Client",
-          eventType: parsed["event type"] || booking.summary.split(" - ").pop() || "Catering Event",
-          eventDate: booking.start.split("T")[0],
-          guestCount: parsed["guest count"] || "0",
+          clientEmail: booking.clientEmail,
+          clientName: booking.clientName,
+          eventType: booking.eventType,
+          eventDate: booking.eventDate,
+          guestCount: booking.guestCount,
           mealInfo: booking.mealInfo || "",
         }),
       });
@@ -296,7 +268,7 @@ export default function BookingsTab() {
 
     setActionLoading(bookingId);
     try {
-      const res = await fetch(`/api/calendar/bookings/${bookingId}/reject`, {
+      const res = await fetch(`/api/bookings/${bookingId}/reject`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Failed to reject");
@@ -399,7 +371,7 @@ export default function BookingsTab() {
       <div className="flex flex-wrap gap-1 border border-sky-deep rounded-sm p-1 mb-6">
         {(["all", "pending", "approved", "rejected"] as const).map((tab) => {
           const count =
-            tab === "all" ? bookings.length : bookings.filter((b) => b.bookingStatus === tab).length;
+            tab === "all" ? bookings.length : bookings.filter((b) => b.status === tab).length;
           return (
             <button
               key={tab}
@@ -610,7 +582,6 @@ export default function BookingsTab() {
         filteredBookings.length > 0 && (
           <div className="space-y-3">
             {filteredBookings.map((booking) => {
-              const parsed = parseBookingDescription(booking.description);
               const isActioning = actionLoading === booking.id;
 
               return (
@@ -621,56 +592,55 @@ export default function BookingsTab() {
                   {/* Title + status badge */}
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h3 className="text-slate-text font-bold text-sm leading-snug">
-                      {booking.summary}
+                      {booking.clientName}
+                      {booking.eventType ? ` \u2014 ${booking.eventType}` : ""}
                     </h3>
                     <span
                       className={cn(
                         "inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border flex-shrink-0",
-                        statusBadgeStyles[booking.bookingStatus]
+                        statusBadgeStyles[booking.status]
                       )}
                     >
-                      {booking.bookingStatus}
+                      {booking.status}
                     </span>
                   </div>
 
-                  {parsed.client && (
-                    <p className="text-slate-muted text-sm mb-2">{parsed.client}</p>
-                  )}
-
-                  {/* Booking metadata — grid on mobile, inline on desktop */}
+                  {/* Booking metadata */}
                   <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-muted">
                     <span className="flex items-center gap-1">
                       <Calendar size={12} className="flex-shrink-0" />
-                      {formatDateTime(booking.start)}
+                      {formatDate(booking.eventDate)}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={12} className="flex-shrink-0" />
-                      {formatTime(booking.start)} - {formatTime(booking.end)}
-                    </span>
-                    {(booking.clientEmail || parsed.email) && (
+                    {booking.eventTime && (
+                      <span className="flex items-center gap-1">
+                        <Clock size={12} className="flex-shrink-0" />
+                        {booking.eventTime}
+                      </span>
+                    )}
+                    {booking.clientEmail && (
                       <a
-                        href={`mailto:${booking.clientEmail || parsed.email}`}
+                        href={`mailto:${booking.clientEmail}`}
                         className="flex items-center gap-1 min-w-0 text-blue-600 hover:text-blue-800 underline underline-offset-2 col-span-2 sm:col-span-1"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Mail size={12} className="flex-shrink-0" />
-                        <span className="truncate">{booking.clientEmail || parsed.email}</span>
+                        <span className="truncate">{booking.clientEmail}</span>
                       </a>
                     )}
-                    {(booking.clientPhone || parsed.phone) && (
+                    {booking.clientPhone && (
                       <a
-                        href={`tel:${booking.clientPhone || parsed.phone}`}
+                        href={`tel:${booking.clientPhone}`}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800 underline underline-offset-2"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Phone size={12} className="flex-shrink-0" />
-                        {booking.clientPhone || parsed.phone}
+                        {booking.clientPhone}
                       </a>
                     )}
-                    {parsed["guest count"] && (
+                    {booking.guestCount > 0 && (
                       <span className="flex items-center gap-1">
                         <Users size={12} className="flex-shrink-0" />
-                        {parsed["guest count"]} guests
+                        {booking.guestCount} guests
                       </span>
                     )}
                     {booking.estimatedTotal != null && booking.estimatedTotal > 0 && (
@@ -680,6 +650,10 @@ export default function BookingsTab() {
                       </span>
                     )}
                   </div>
+
+                  {booking.notes && (
+                    <p className="text-xs text-slate-muted mt-2 italic">{booking.notes}</p>
+                  )}
 
                   {booking.invoiceUrl && (
                     <a
@@ -732,8 +706,8 @@ export default function BookingsTab() {
                     );
                   })()}
 
-                  {/* Action buttons for pending bookings — full width on mobile */}
-                  {booking.bookingStatus === "pending" && (
+                  {/* Action buttons for pending bookings */}
+                  {booking.status === "pending" && (
                     <div className="flex gap-2 mt-3 pt-3 border-t border-sky-deep">
                       <button
                         onClick={() => openApprovalModal(booking)}

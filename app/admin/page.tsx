@@ -56,16 +56,11 @@ function AdminContent() {
   const [loading, setLoading] = useState(true);
 
   const squareStatus = searchParams.get("square");
-  const calendarStatus = searchParams.get("calendar");
-  const [calendarInfo, setCalendarInfo] = useState<{
-    connected: boolean;
-    email?: string;
-  } | null>(null);
   const [squareInfo, setSquareInfo] = useState<{
     connected: boolean;
     merchantId?: string;
+    connectedBy?: string;
   } | null>(null);
-  const [disconnectingCal, setDisconnectingCal] = useState(false);
   const [disconnectingSq, setDisconnectingSq] = useState(false);
 
   useEffect(() => {
@@ -78,25 +73,10 @@ function AdminContent() {
       })
       .finally(() => setLoading(false));
 
-    fetch("/api/calendar/status")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (data) setCalendarInfo(data); });
-
     fetch("/api/square/status")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => { if (data) setSquareInfo(data); });
   }, []);
-
-  const handleDisconnectCalendar = async () => {
-    if (!confirm("Disconnect Google Calendar?")) return;
-    setDisconnectingCal(true);
-    try {
-      const res = await fetch("/api/calendar/disconnect", { method: "POST" });
-      if (res.ok) setCalendarInfo({ connected: false });
-    } finally {
-      setDisconnectingCal(false);
-    }
-  };
 
   const handleDisconnectSquare = async () => {
     if (!confirm("Disconnect Square?")) return;
@@ -167,59 +147,8 @@ function AdminContent() {
           </div>
         )}
 
-        {/* Calendar connection status */}
-        {calendarStatus === "connected" && (
-          <div className="flex items-center gap-2 text-green-600 text-sm mb-4 bg-green-50 border border-green-200 rounded-sm px-4 py-2">
-            <CheckCircle2 size={16} /> Google Calendar connected successfully!
-          </div>
-        )}
-        {calendarStatus === "error" && (
-          <div className="flex items-center gap-2 text-red-500 text-sm mb-4 bg-red-50 border border-red-200 rounded-sm px-4 py-2">
-            <AlertCircle size={16} /> Failed to connect Google Calendar. Try again.
-          </div>
-        )}
-        {calendarStatus === "no_refresh" && (
-          <div className="flex items-center gap-2 text-amber-600 text-sm mb-4 bg-amber-50 border border-amber-200 rounded-sm px-4 py-2">
-            <AlertCircle size={16} /> No refresh token received. Please disconnect and reconnect your Google account.
-          </div>
-        )}
-
         {/* Connection cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-          {/* Google Calendar card */}
-          {calendarInfo && (
-            <div className="border border-sky-deep rounded-sm px-4 py-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <Calendar size={18} className={calendarInfo.connected ? "text-green-600" : "text-slate-muted"} />
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-text">Google Calendar</p>
-                  {calendarInfo.connected ? (
-                    <p className="text-xs text-slate-muted truncate">{calendarInfo.email}</p>
-                  ) : (
-                    <p className="text-xs text-slate-muted">Not connected</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {calendarInfo.connected && (
-                  <button
-                    onClick={handleDisconnectCalendar}
-                    disabled={disconnectingCal}
-                    className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors px-3 py-1.5 border border-red-200 rounded-sm disabled:opacity-50"
-                  >
-                    {disconnectingCal ? "..." : "Disconnect"}
-                  </button>
-                )}
-                <a
-                  href="/api/auth/google-calendar"
-                  className="text-xs font-bold text-primary hover:text-primary-dark transition-colors px-3 py-1.5 border border-sky-deep rounded-sm"
-                >
-                  {calendarInfo.connected ? "Reconnect" : "Connect"}
-                </a>
-              </div>
-            </div>
-          )}
-
           {/* Square card */}
           {squareInfo && (
             <div className="border border-sky-deep rounded-sm px-4 py-3 flex items-center justify-between gap-3">
@@ -229,7 +158,7 @@ function AdminContent() {
                   <p className="text-sm font-bold text-slate-text">Square</p>
                   {squareInfo.connected ? (
                     <p className="text-xs text-slate-muted truncate">
-                      {squareInfo.merchantId ? `Merchant ${squareInfo.merchantId}` : "Connected"}
+                      {squareInfo.connectedBy ? `Connected by ${squareInfo.connectedBy}` : squareInfo.merchantId ? `Merchant ${squareInfo.merchantId}` : "Connected"}
                     </p>
                   ) : (
                     <p className="text-xs text-slate-muted">Not connected</p>
