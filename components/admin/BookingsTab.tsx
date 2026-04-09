@@ -844,7 +844,7 @@ export default function BookingsTab() {
           >
             <h3 className="text-slate-text text-sm font-bold mb-1">Approve Booking</h3>
             <p className="text-slate-muted text-xs mb-5">
-              Set the final price and deposit. A Square invoice will be created and emailed to the client.
+              Set the final price and deposit for this booking.
             </p>
 
             <div className="space-y-4">
@@ -917,12 +917,12 @@ export default function BookingsTab() {
                   {actionLoading === approvalModal.booking.id ? (
                     <>
                       <Loader2 className="animate-spin" size={14} />
-                      Creating Invoice...
+                      Approving...
                     </>
                   ) : (
                     <>
                       <Check size={14} />
-                      Approve & Invoice
+                      Approve Booking
                     </>
                   )}
                 </button>

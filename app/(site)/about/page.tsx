@@ -77,6 +77,22 @@ export default async function AboutPage() {
         </div>
       </section>
 
+      {/* Scripture */}
+      <section className="py-16 md:py-24 px-6 sm:px-8 bg-primary">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-12 h-[2px] bg-white/40 mx-auto mb-8" />
+          <blockquote className="font-heading text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-snug mb-6 italic">
+            &ldquo;For I was hungry and you gave me something to eat, I was
+            thirsty and you gave me something to drink, I was a stranger and you
+            invited me in.&rdquo;
+          </blockquote>
+          <p className="text-white/70 text-sm md:text-base font-bold tracking-[0.2em] uppercase">
+            Matthew 25:35
+          </p>
+          <div className="w-12 h-[2px] bg-white/40 mx-auto mt-8" />
+        </div>
+      </section>
+
       {/* Values Section */}
       <section className="py-20 md:py-28 px-6 sm:px-8 bg-sky/50">
         <div className="max-w-6xl mx-auto">

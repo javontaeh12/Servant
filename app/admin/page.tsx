@@ -1,16 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Loader2,
   Calendar,
-  DollarSign,
-  UtensilsCrossed,
-  Settings,
   LogOut,
-  CheckCircle2,
-  AlertCircle,
   Home,
   Building2,
   Images,
@@ -24,9 +19,6 @@ import { Suspense } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 const BookingsTab = dynamic(() => import("@/components/admin/BookingsTab"));
-const PaymentsTab = dynamic(() => import("@/components/admin/PaymentsTab"));
-const MenuTab = dynamic(() => import("@/components/admin/MenuTab"));
-const PricingTab = dynamic(() => import("@/components/admin/PricingTab"));
 const BusinessTab = dynamic(() => import("@/components/admin/BusinessTab"));
 const GalleryTab = dynamic(() => import("@/components/admin/GalleryTab"));
 const SpecialtiesTab = dynamic(() => import("@/components/admin/SpecialtiesTab"));
@@ -34,9 +26,6 @@ const SiteSettingsTab = dynamic(() => import("@/components/admin/SiteSettingsTab
 
 const TABS = [
   { id: "bookings", label: "Bookings", icon: Calendar },
-  { id: "payments", label: "Payments", icon: DollarSign },
-  { id: "menu", label: "Menu", icon: UtensilsCrossed },
-  { id: "pricing", label: "Pricing", icon: Settings },
   { id: "business", label: "Business", icon: Building2 },
   { id: "specialties", label: "Specialties", icon: Sparkles },
   { id: "gallery", label: "Gallery", icon: Images },
@@ -47,21 +36,12 @@ type TabId = (typeof TABS)[number]["id"];
 
 function AdminContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabId>("bookings");
   const [session, setSession] = useState<{
     email: string;
     name: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const squareStatus = searchParams.get("square");
-  const [squareInfo, setSquareInfo] = useState<{
-    connected: boolean;
-    merchantId?: string;
-    connectedBy?: string;
-  } | null>(null);
-  const [disconnectingSq, setDisconnectingSq] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -72,22 +52,7 @@ function AdminContent() {
         }
       })
       .finally(() => setLoading(false));
-
-    fetch("/api/square/status")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (data) setSquareInfo(data); });
   }, []);
-
-  const handleDisconnectSquare = async () => {
-    if (!confirm("Disconnect Square?")) return;
-    setDisconnectingSq(true);
-    try {
-      const res = await fetch("/api/square/disconnect", { method: "POST" });
-      if (res.ok) setSquareInfo({ connected: false });
-    } finally {
-      setDisconnectingSq(false);
-    }
-  };
 
   const handleSignOut = async () => {
     await fetch("/api/auth/signout", { method: "POST" });
@@ -114,7 +79,7 @@ function AdminContent() {
             <p className="text-slate-muted text-sm">
               {session
                 ? `Signed in as ${session.name.split(" ").pop()?.charAt(0).toUpperCase()}${session.name.split(" ").pop()?.slice(1).toLowerCase() || session.name}`
-                : "Manage bookings, payments, menu, and pricing."}
+                : "Manage bookings, business info, and site settings."}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -133,57 +98,6 @@ function AdminContent() {
               <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
-        </div>
-
-        {/* Square connection status */}
-        {squareStatus === "connected" && (
-          <div className="flex items-center gap-2 text-green-600 text-sm mb-4 bg-green-50 border border-green-200 rounded-sm px-4 py-2">
-            <CheckCircle2 size={16} /> Square account connected successfully!
-          </div>
-        )}
-        {squareStatus === "error" && (
-          <div className="flex items-center gap-2 text-red-500 text-sm mb-4 bg-red-50 border border-red-200 rounded-sm px-4 py-2">
-            <AlertCircle size={16} /> Failed to connect Square. Try again.
-          </div>
-        )}
-
-        {/* Connection cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-          {/* Square card */}
-          {squareInfo && (
-            <div className="border border-sky-deep rounded-sm px-4 py-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <DollarSign size={18} className={squareInfo.connected ? "text-green-600" : "text-slate-muted"} />
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-text">Square</p>
-                  {squareInfo.connected ? (
-                    <p className="text-xs text-slate-muted truncate">
-                      {squareInfo.connectedBy ? `Connected by ${squareInfo.connectedBy}` : squareInfo.merchantId ? `Merchant ${squareInfo.merchantId}` : "Connected"}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-slate-muted">Not connected</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {squareInfo.connected && (
-                  <button
-                    onClick={handleDisconnectSquare}
-                    disabled={disconnectingSq}
-                    className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors px-3 py-1.5 border border-red-200 rounded-sm disabled:opacity-50"
-                  >
-                    {disconnectingSq ? "..." : "Disconnect"}
-                  </button>
-                )}
-                <a
-                  href="/api/auth/square"
-                  className="text-xs font-bold text-primary hover:text-primary-dark transition-colors px-3 py-1.5 border border-sky-deep rounded-sm"
-                >
-                  {squareInfo.connected ? "Reconnect" : "Connect"}
-                </a>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Tab bar */}
@@ -217,9 +131,6 @@ function AdminContent() {
 
         {/* Tab content */}
         {activeTab === "bookings" && <BookingsTab />}
-        {activeTab === "payments" && <PaymentsTab />}
-        {activeTab === "menu" && <MenuTab />}
-        {activeTab === "pricing" && <PricingTab />}
         {activeTab === "business" && <BusinessTab />}
         {activeTab === "specialties" && <SpecialtiesTab />}
         {activeTab === "gallery" && <GalleryTab />}

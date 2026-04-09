@@ -28,7 +28,7 @@ const MENU_PAGES = [
     icon: UtensilsCrossed,
     desc: "What we cater",
   },
-  { label: "Menus", href: "/menus", icon: BookOpen, desc: "Meals & pricing" },
+  { label: "Menus", href: "/menus", icon: BookOpen, desc: "Our meal packages" },
   {
     label: "Gallery",
     href: "/gallery",

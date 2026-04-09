@@ -34,6 +34,7 @@ export const SERVICES: Service[] = [
       "Elegant table presentation",
       "Complimentary tasting for couples",
       "Setup and cleanup included",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -47,6 +48,7 @@ export const SERVICES: Service[] = [
       "Professional uniformed staff",
       "Branded presentation available",
       "Flexible scheduling",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -60,6 +62,7 @@ export const SERVICES: Service[] = [
       "Wine pairing suggestions",
       "Intimate table styling",
       "Full service from start to finish",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -73,6 +76,7 @@ export const SERVICES: Service[] = [
       "Custom dessert options",
       "Family-style or plated service",
       "Holiday décor coordination",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -84,8 +88,9 @@ export const SERVICES: Service[] = [
       "Large group capacity",
       "Budget-friendly packages",
       "Buffet-style service",
-      "Volunteer coordination support",
+      "Community Feeding",
       "Delivery and setup",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -99,6 +104,7 @@ export const SERVICES: Service[] = [
       "Flexible timing",
       "Full setup and cleanup",
       "Coordination with venue",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -112,6 +118,7 @@ export const SERVICES: Service[] = [
       "Dessert and cake table setup",
       "Kid-friendly menu options",
       "Setup and cleanup included",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -125,6 +132,7 @@ export const SERVICES: Service[] = [
       "Outdoor event support",
       "Flexible headcount accommodations",
       "Family-style serving options",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -138,6 +146,7 @@ export const SERVICES: Service[] = [
       "Brunch and afternoon tea menus",
       "Decorative food presentation",
       "Full service or drop-off available",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -151,6 +160,7 @@ export const SERVICES: Service[] = [
       "Outdoor cookout options",
       "Accommodates large guest lists",
       "Setup and cleanup included",
+      "Fully customizable to your vision",
     ],
   },
   {
@@ -164,6 +174,21 @@ export const SERVICES: Service[] = [
       "Grab-and-go or buffet options",
       "Budget-friendly packages",
       "Delivery, setup, and cleanup",
+      "Fully customizable to your vision",
+    ],
+  },
+  {
+    name: "Anniversaries",
+    description:
+      "Celebrate your milestone with a meal as memorable as the years you've shared. Whether it's an intimate dinner for two or a grand celebration with family and friends, we craft the perfect menu for your love story.",
+    icon: "Heart",
+    included: [
+      "Romantic plated dinner options",
+      "Multi-course meal packages",
+      "Elegant table presentation",
+      "Dessert and cake table setup",
+      "Full service from start to finish",
+      "Fully customizable to your vision",
     ],
   },
 ];
@@ -228,6 +253,7 @@ export const EVENT_TYPES = [
   "Baby Shower / Bridal Shower",
   "Graduation Celebration",
   "School Event",
+  "Anniversary",
   "Other",
 ] as const;
 

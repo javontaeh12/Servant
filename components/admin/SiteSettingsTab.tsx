@@ -74,8 +74,8 @@ export default function SiteSettingsTab() {
       )}
 
       {/* Quote Form Toggle */}
-      <div className="border border-sky-deep rounded-sm p-5">
-        <div className="flex items-start justify-between gap-4">
+      <div className="border border-sky-deep rounded-sm p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h3 className="font-heading text-base font-bold text-slate-text mb-1">
               Quote Request Form
@@ -85,13 +85,13 @@ export default function SiteSettingsTab() {
               <span className="font-medium text-slate-text">/quote</span> page.
             </p>
             <div className="space-y-2 text-sm">
-              <div className={`flex items-start gap-2 p-3 rounded-sm border ${settings?.quoteFormMode === "builder" ? "border-primary bg-primary/5" : "border-sky-deep"}`}>
-                <span className="font-bold text-slate-text w-16 shrink-0">Builder</span>
-                <span className="text-slate-muted">Multi-step wizard with meal selection, add-ons, and real-time pricing. Currently active: {settings?.quoteFormMode === "builder" ? "✓" : ""}</span>
+              <div className={`flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-2 p-3 rounded-sm border ${settings?.quoteFormMode === "builder" ? "border-primary bg-primary/5" : "border-sky-deep"}`}>
+                <span className="font-bold text-slate-text shrink-0">Builder {settings?.quoteFormMode === "builder" ? "✓" : ""}</span>
+                <span className="text-slate-muted text-xs sm:text-sm">Multi-step wizard with meal selection, add-ons, and real-time pricing.</span>
               </div>
-              <div className={`flex items-start gap-2 p-3 rounded-sm border ${settings?.quoteFormMode === "simple" ? "border-primary bg-primary/5" : "border-sky-deep"}`}>
-                <span className="font-bold text-slate-text w-16 shrink-0">Simple</span>
-                <span className="text-slate-muted">Clean single-page form collecting contact info, event details, menu preferences, and guest count. Currently active: {settings?.quoteFormMode === "simple" ? "✓" : ""}</span>
+              <div className={`flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-2 p-3 rounded-sm border ${settings?.quoteFormMode === "simple" ? "border-primary bg-primary/5" : "border-sky-deep"}`}>
+                <span className="font-bold text-slate-text shrink-0">Simple {settings?.quoteFormMode === "simple" ? "✓" : ""}</span>
+                <span className="text-slate-muted text-xs sm:text-sm">Clean single-page form collecting contact info, event details, and guest count.</span>
               </div>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function SiteSettingsTab() {
           <button
             onClick={toggleQuoteForm}
             disabled={saving}
-            className="flex items-center gap-2 shrink-0 px-4 py-2 text-sm font-bold border border-sky-deep hover:border-primary hover:text-primary transition-colors rounded-sm disabled:opacity-50"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 px-4 py-2.5 sm:py-2 text-sm font-bold border border-sky-deep hover:border-primary hover:text-primary transition-colors rounded-sm disabled:opacity-50"
           >
             {saving ? (
               <Loader2 size={16} className="animate-spin" />
