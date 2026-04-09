@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { createSession, COOKIE_NAME } from "@/lib/session";
+import { createSession, isAllowedEmail, COOKIE_NAME } from "@/lib/session";
 
 function timingSafeEqual(a: string, b: string): boolean {
   const bufA = Buffer.from(a);
@@ -24,23 +24,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
-    if (!adminEmail || !adminPassword) {
+    if (!adminPassword) {
       return NextResponse.json(
         { error: "Admin credentials not configured" },
         { status: 500 }
       );
     }
 
-    const emailMatch = timingSafeEqual(
-      email.toLowerCase().trim(),
-      adminEmail.toLowerCase().trim()
-    );
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if email is in the allowed admin list
+    if (!isAllowedEmail(normalizedEmail)) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
     const passwordMatch = timingSafeEqual(password, adminPassword);
 
-    if (!emailMatch || !passwordMatch) {
+    if (!passwordMatch) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
@@ -48,8 +53,8 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionToken = await createSession({
-      email: adminEmail,
-      name: adminEmail.split("@")[0],
+      email: normalizedEmail,
+      name: normalizedEmail.split("@")[0],
     });
 
     const response = NextResponse.json({ success: true });

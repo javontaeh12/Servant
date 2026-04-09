@@ -92,6 +92,7 @@ export default function PaymentsTab() {
 
   const initSquareCard = useCallback(async () => {
     const appId = process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID;
+    const locationId = process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID;
     const env = process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT;
     if (!appId) {
       setPaymentError("Square application ID not configured");
@@ -119,7 +120,7 @@ export default function PaymentsTab() {
       const Square = (window as any).Square;
       if (!Square) throw new Error("Square SDK not available");
 
-      const payments = await Square.payments(appId, undefined);
+      const payments = await Square.payments(appId, locationId);
       paymentsInstanceRef.current = payments;
 
       const card = await payments.card();

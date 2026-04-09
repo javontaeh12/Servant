@@ -3,18 +3,13 @@ import { put, get } from "@vercel/blob";
 const CREDENTIALS_JSON_PATH = "data/credentials.json";
 
 export interface StoredCredentials {
-  google?: {
-    refreshToken: string;
-    email: string;
-    name: string;
-    connectedAt: string;
-  };
   square?: {
     accessToken: string;
     refreshToken?: string;
     merchantId?: string;
     expiresAt?: string;
     connectedAt: string;
+    connectedBy?: string;
   };
 }
 
@@ -37,24 +32,6 @@ export async function saveCredentials(
   const existing = await getCredentials();
   const merged = { ...existing, ...creds };
   await put(CREDENTIALS_JSON_PATH, JSON.stringify(merged, null, 2), {
-    access: "private",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
-}
-
-// Get the Google refresh token (from stored credentials only)
-export async function getGoogleRefreshToken(): Promise<string> {
-  const creds = await getCredentials();
-  return creds.google?.refreshToken || "";
-}
-
-// Remove the stored Google Calendar credentials
-export async function removeGoogleCredentials(): Promise<void> {
-  const existing = await getCredentials();
-  delete existing.google;
-  await put(CREDENTIALS_JSON_PATH, JSON.stringify(existing, null, 2), {
     access: "private",
     contentType: "application/json",
     addRandomSuffix: false,
@@ -121,9 +98,14 @@ async function refreshSquareToken(
 }
 
 // Get the Square access token, refreshing automatically if expired
+// Falls back to SQUARE_API_KEY env var if no OAuth credentials are stored
 export async function getSquareAccessToken(): Promise<string> {
   const creds = await getCredentials();
-  if (!creds.square?.accessToken) return "";
+
+  // If no OAuth credentials stored, fall back to API key from env
+  if (!creds.square?.accessToken) {
+    return process.env.SQUARE_API_KEY || "";
+  }
 
   // If the token is expired and we have a refresh token, auto-refresh
   if (
@@ -143,10 +125,11 @@ export async function getSquareAccessToken(): Promise<string> {
       });
       return refreshed.accessToken;
     }
-    // Refresh failed — fall through and return the (possibly expired) token
+    // Refresh failed — fall back to API key if available, otherwise use expired token
     console.warn(
-      "Square token refresh failed; returning existing token which may be expired"
+      "Square token refresh failed; trying SQUARE_API_KEY fallback"
     );
+    return process.env.SQUARE_API_KEY || creds.square.accessToken;
   }
 
   return creds.square.accessToken;
