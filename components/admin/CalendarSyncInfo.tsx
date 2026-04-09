@@ -127,6 +127,27 @@ export default function CalendarSyncInfo() {
                 <li>Click <strong>{`"Import"`}</strong></li>
               </ol>
             </div>
+
+            <div className="border border-sky-deep rounded-sm p-3">
+              <h4 className="text-xs font-bold text-slate-text mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#3DDC84">
+                  <path d="M17.523 15.341c-.292.162-.643.162-.935 0L12 12.804l-4.588 2.537c-.292.162-.643.162-.935 0-.292-.162-.477-.473-.477-.808V9.467c0-.335.185-.646.477-.808l5-2.767c.292-.162.643-.162.935 0l5 2.767c.292.162.477.473.477.808v5.066c0 .335-.185.646-.477.808z"/>
+                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fillOpacity=".15"/>
+                </svg>
+                Android (Google Calendar App)
+              </h4>
+              <ol className="text-xs text-slate-muted space-y-1 list-decimal list-inside">
+                <li>Copy the calendar feed URL above</li>
+                <li>Open a browser on your Android phone and go to <strong>calendar.google.com</strong></li>
+                <li>Tap the <strong>☰ menu</strong> → <strong>{`"Other calendars"`}</strong> → <strong>{`"+"`}</strong></li>
+                <li>Select <strong>{`"From URL"`}</strong></li>
+                <li>Paste the feed URL and tap <strong>{`"Add calendar"`}</strong></li>
+                <li>Open the <strong>Google Calendar app</strong> — the calendar will sync within a few minutes</li>
+              </ol>
+              <p className="text-[11px] text-slate-muted/60 mt-2">
+                Note: Android doesn&apos;t support adding iCal subscriptions directly from the app — you must use the Google Calendar website first.
+              </p>
+            </div>
           </div>
 
           <p className="text-[11px] text-slate-muted/70">
