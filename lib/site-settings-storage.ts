@@ -5,6 +5,8 @@ const SETTINGS_PREFIX = "data/site-settings";
 
 export interface SiteSettings {
   quoteFormMode: "builder" | "simple";
+  featuredImage: string;
+  featuredImageActive: boolean;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = staticSettings as SiteSettings;

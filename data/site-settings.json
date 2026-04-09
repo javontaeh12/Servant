@@ -1,3 +1,5 @@
 {
-  "quoteFormMode": "simple"
+  "quoteFormMode": "simple",
+  "featuredImage": "",
+  "featuredImageActive": false
 }

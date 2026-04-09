@@ -1,5 +1,6 @@
 import HeroSection from "@/components/home/HeroSection";
 import ServicesPreview from "@/components/home/ServicesPreview";
+import FeaturedImage from "@/components/home/FeaturedImage";
 import CateringAddOns from "@/components/home/CateringAddOns";
 import ServiceArea from "@/components/home/ServiceArea";
 import PopularMenus from "@/components/home/PopularMenus";
@@ -11,6 +12,7 @@ export default function Home() {
     <>
       <HeroSection />
       <ServicesPreview />
+      <FeaturedImage />
       <CateringAddOns />
       <PopularMenus />
       <ServiceArea />
