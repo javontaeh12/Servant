@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBookingById, updateBooking } from "@/lib/bookings";
 import { getSessionFromRequest } from "@/lib/session";
+import { notifyClientBookingRejected } from "@/lib/email";
 
 export async function POST(
   request: NextRequest,
@@ -19,6 +20,15 @@ export async function POST(
 
   try {
     await updateBooking(id, { status: "rejected" });
+
+    // Notify client (fire-and-forget)
+    notifyClientBookingRejected({
+      clientName: booking.clientName,
+      clientEmail: booking.clientEmail,
+      eventDate: booking.eventDate,
+      eventType: booking.eventType,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Reject booking error:", error);

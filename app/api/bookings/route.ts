@@ -6,6 +6,7 @@ import { readMenu } from "@/lib/menu-storage";
 import { calculateEstimate } from "@/lib/pricing";
 import { MealSelection } from "@/lib/types";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { notifyAdminNewBooking } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -147,6 +148,19 @@ export async function POST(request: NextRequest) {
       estimatedTotal,
       mealInfo: mealInfoJson,
     });
+
+    // Notify admin (fire-and-forget)
+    notifyAdminNewBooking({
+      clientName: booking.clientName,
+      clientEmail: booking.clientEmail,
+      clientPhone: booking.clientPhone,
+      eventDate: booking.eventDate,
+      eventTime: booking.eventTime,
+      guestCount: booking.guestCount,
+      eventType: booking.eventType,
+      serviceStyle: booking.serviceStyle,
+      notes: booking.notes,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, bookingId: booking.id });
   } catch (error) {

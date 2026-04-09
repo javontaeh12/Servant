@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getBookingById, updateBooking } from "@/lib/bookings";
 import { createInvoiceForBooking } from "@/lib/square-invoice";
 import { getSessionFromRequest } from "@/lib/session";
+import { notifyClientBookingConfirmed } from "@/lib/email";
 
 export async function POST(
   request: NextRequest,
@@ -67,6 +68,18 @@ export async function POST(
       invoiceId,
       invoiceUrl,
     });
+
+    // Notify client (fire-and-forget)
+    notifyClientBookingConfirmed({
+      clientName,
+      clientEmail,
+      eventDate: eventDate || booking.eventDate,
+      eventTime: booking.eventTime,
+      eventType: eventType || booking.eventType,
+      invoiceUrl: invoiceUrl || null,
+      finalTotal: Number(finalTotal),
+      depositAmount: Number(depositAmount),
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, invoiceId, invoiceUrl });
   } catch (error) {

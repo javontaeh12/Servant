@@ -18,10 +18,21 @@ import {
   ExternalLink,
   Search,
   UtensilsCrossed,
+  List,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Booking, BookingStatus, TimeSlot } from "@/lib/types";
 import { EVENT_TYPES, SERVICE_STYLES } from "@/lib/constants";
+import BookingCalendar from "./BookingCalendar";
+import CalendarSyncInfo from "./CalendarSyncInfo";
+
+interface BlockedDate {
+  date: string;
+  reason?: string;
+  blockedBy?: string;
+  blockedAt: string;
+}
 
 type FilterTab = "all" | BookingStatus;
 
@@ -77,6 +88,8 @@ export default function BookingsTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [approvalModal, setApprovalModal] = useState<ApprovalModalData | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
 
   // Add Booking form state
   const [showForm, setShowForm] = useState(false);
@@ -112,9 +125,48 @@ export default function BookingsTab() {
     }
   }, []);
 
+  const fetchBlockedDates = useCallback(async () => {
+    try {
+      const res = await fetch("/api/bookings/blocked-dates");
+      if (res.ok) {
+        const data = await res.json();
+        setBlockedDates(data);
+      }
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
   useEffect(() => {
     fetchBookings();
-  }, [fetchBookings]);
+    fetchBlockedDates();
+  }, [fetchBookings, fetchBlockedDates]);
+
+  const handleBlockDate = async (date: string, reason?: string) => {
+    try {
+      const res = await fetch("/api/bookings/blocked-dates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, reason }),
+      });
+      if (res.ok) fetchBlockedDates();
+    } catch {
+      // Failed
+    }
+  };
+
+  const handleUnblockDate = async (date: string) => {
+    try {
+      const res = await fetch("/api/bookings/blocked-dates", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date }),
+      });
+      if (res.ok) fetchBlockedDates();
+    } catch {
+      // Failed
+    }
+  };
 
   const pendingCount = bookings.filter((b) => b.status === "pending").length;
   const filteredBookings = bookings.filter((b) => {
@@ -333,8 +385,31 @@ export default function BookingsTab() {
           Bookings ({bookings.length})
         </h2>
         <div className="flex items-center gap-3">
+          {/* View toggle */}
+          <div className="flex border border-sky-deep rounded-sm overflow-hidden">
+            <button
+              onClick={() => setViewMode("calendar")}
+              className={cn(
+                "p-1.5 transition-colors",
+                viewMode === "calendar" ? "bg-primary text-white" : "text-slate-muted hover:text-slate-text"
+              )}
+              title="Calendar view"
+            >
+              <CalendarDays size={14} />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "p-1.5 transition-colors",
+                viewMode === "list" ? "bg-primary text-white" : "text-slate-muted hover:text-slate-text"
+              )}
+              title="List view"
+            >
+              <List size={14} />
+            </button>
+          </div>
           <button
-            onClick={fetchBookings}
+            onClick={() => { fetchBookings(); fetchBlockedDates(); }}
             className="flex items-center gap-1.5 text-primary text-xs font-bold hover:text-primary-dark transition-colors"
           >
             <RefreshCw size={14} /> Refresh
@@ -352,6 +427,21 @@ export default function BookingsTab() {
         </div>
       </div>
 
+      {/* Calendar View */}
+      {viewMode === "calendar" && (
+        <BookingCalendar
+          bookings={bookings}
+          blockedDates={blockedDates}
+          onBlockDate={handleBlockDate}
+          onUnblockDate={handleUnblockDate}
+          onSelectBooking={(b) => {
+            if (b.status === "pending") openApprovalModal(b);
+          }}
+        />
+      )}
+
+      {/* List View */}
+      {viewMode === "list" && <>
       {/* Search */}
       <div className="relative mb-4">
         <Search
@@ -737,6 +827,10 @@ export default function BookingsTab() {
           </div>
         )
       )}
+      </>}
+
+      {/* Calendar Sync Instructions */}
+      <CalendarSyncInfo />
 
       {/* Approval Modal */}
       {approvalModal && (

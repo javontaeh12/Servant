@@ -2,6 +2,7 @@ import { put, get } from "@vercel/blob";
 import { Booking, TimeSlot } from "./types";
 
 const BOOKINGS_PATH = "data/bookings.json";
+const BLOCKED_DATES_PATH = "data/blocked-dates.json";
 
 const BUSINESS_START_HOUR = 9;
 const BUSINESS_END_HOUR = 19;
@@ -26,6 +27,52 @@ async function saveBookings(bookings: Booking[]): Promise<void> {
     addRandomSuffix: false,
     allowOverwrite: true,
   });
+}
+
+// ========== Blocked Dates ==========
+
+export interface BlockedDate {
+  date: string; // YYYY-MM-DD
+  reason?: string;
+  blockedBy?: string;
+  blockedAt: string;
+}
+
+export async function getBlockedDates(): Promise<BlockedDate[]> {
+  try {
+    const result = await get(BLOCKED_DATES_PATH, { access: "private" });
+    if (!result) return [];
+    const text = await new Response(result.stream).text();
+    return JSON.parse(text) as BlockedDate[];
+  } catch {
+    return [];
+  }
+}
+
+async function saveBlockedDates(dates: BlockedDate[]): Promise<void> {
+  await put(BLOCKED_DATES_PATH, JSON.stringify(dates, null, 2), {
+    access: "private",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+  });
+}
+
+export async function blockDate(date: string, reason?: string, blockedBy?: string): Promise<void> {
+  const blocked = await getBlockedDates();
+  if (blocked.some((b) => b.date === date)) return; // Already blocked
+  blocked.push({ date, reason, blockedBy, blockedAt: new Date().toISOString() });
+  await saveBlockedDates(blocked);
+}
+
+export async function unblockDate(date: string): Promise<void> {
+  const blocked = await getBlockedDates();
+  await saveBlockedDates(blocked.filter((b) => b.date !== date));
+}
+
+export async function isDateBlocked(date: string): Promise<boolean> {
+  const blocked = await getBlockedDates();
+  return blocked.some((b) => b.date === date);
 }
 
 // ========== CRUD ==========
@@ -100,6 +147,9 @@ export async function getAvailableSlots(dateStr: string): Promise<TimeSlot[]> {
   today.setHours(0, 0, 0, 0);
   const requestDate = new Date(dateStr + "T00:00:00");
   if (requestDate < today) return [];
+
+  // Blocked date check
+  if (await isDateBlocked(dateStr)) return [];
 
   // Get existing bookings for this date (exclude rejected)
   const bookings = await getBookings();

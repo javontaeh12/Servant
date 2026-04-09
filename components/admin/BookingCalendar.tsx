@@ -1,0 +1,388 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  Unlock,
+  Users,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  X,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Booking, BookingStatus } from "@/lib/types";
+
+interface BlockedDate {
+  date: string;
+  reason?: string;
+  blockedBy?: string;
+  blockedAt: string;
+}
+
+interface BookingCalendarProps {
+  bookings: Booking[];
+  blockedDates: BlockedDate[];
+  onBlockDate: (date: string, reason?: string) => void;
+  onUnblockDate: (date: string) => void;
+  onSelectBooking: (booking: Booking) => void;
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const statusDot: Record<BookingStatus, string> = {
+  pending: "bg-amber-400",
+  approved: "bg-green-500",
+  rejected: "bg-red-400",
+};
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function getFirstDayOfWeek(year: number, month: number) {
+  return new Date(year, month, 1).getDay();
+}
+
+function formatDateStr(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export default function BookingCalendar({
+  bookings,
+  blockedDates,
+  onBlockDate,
+  onUnblockDate,
+  onSelectBooking,
+}: BookingCalendarProps) {
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [blockReason, setBlockReason] = useState("");
+
+  const todayStr = formatDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const blockedSet = useMemo(
+    () => new Set(blockedDates.map((b) => b.date)),
+    [blockedDates]
+  );
+
+  const bookingsByDate = useMemo(() => {
+    const map: Record<string, Booking[]> = {};
+    for (const b of bookings) {
+      if (b.status === "rejected") continue;
+      if (!map[b.eventDate]) map[b.eventDate] = [];
+      map[b.eventDate].push(b);
+    }
+    return map;
+  }, [bookings]);
+
+  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
+  const firstDay = getFirstDayOfWeek(viewYear, viewMonth);
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  function prevMonth() {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear(viewYear - 1);
+    } else {
+      setViewMonth(viewMonth - 1);
+    }
+    setSelectedDate(null);
+  }
+
+  function nextMonth() {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear(viewYear + 1);
+    } else {
+      setViewMonth(viewMonth + 1);
+    }
+    setSelectedDate(null);
+  }
+
+  function goToToday() {
+    setViewYear(today.getFullYear());
+    setViewMonth(today.getMonth());
+    setSelectedDate(null);
+  }
+
+  const selectedBookings = selectedDate ? (bookingsByDate[selectedDate] || []) : [];
+  const isSelectedBlocked = selectedDate ? blockedSet.has(selectedDate) : false;
+  const selectedBlockInfo = selectedDate
+    ? blockedDates.find((b) => b.date === selectedDate)
+    : null;
+
+  // Build calendar grid (6 rows x 7 cols)
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div>
+      {/* Month navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prevMonth}
+            className="p-1.5 rounded-sm border border-sky-deep hover:bg-sky/50 transition-colors"
+          >
+            <ChevronLeft size={16} className="text-slate-muted" />
+          </button>
+          <h3 className="text-slate-text font-bold text-sm min-w-[160px] text-center">
+            {monthLabel}
+          </h3>
+          <button
+            onClick={nextMonth}
+            className="p-1.5 rounded-sm border border-sky-deep hover:bg-sky/50 transition-colors"
+          >
+            <ChevronRight size={16} className="text-slate-muted" />
+          </button>
+        </div>
+        <button
+          onClick={goToToday}
+          className="text-xs font-bold text-primary hover:text-primary-dark transition-colors"
+        >
+          Today
+        </button>
+      </div>
+
+      {/* Calendar grid */}
+      <div className="border border-sky-deep rounded-sm overflow-hidden">
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 bg-sky/50 border-b border-sky-deep">
+          {WEEKDAYS.map((d) => (
+            <div
+              key={d}
+              className="py-2 text-center text-[10px] sm:text-xs font-bold text-slate-muted uppercase tracking-wide"
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div className="grid grid-cols-7">
+          {cells.map((day, i) => {
+            if (day === null) {
+              return <div key={`empty-${i}`} className="border-b border-r border-sky-deep/50 min-h-[52px] sm:min-h-[72px] bg-slate-50/50" />;
+            }
+
+            const dateStr = formatDateStr(viewYear, viewMonth, day);
+            const isToday = dateStr === todayStr;
+            const isBlocked = blockedSet.has(dateStr);
+            const dayBookings = bookingsByDate[dateStr] || [];
+            const isSelected = dateStr === selectedDate;
+            const isPast = new Date(dateStr + "T23:59:59") < new Date(todayStr + "T00:00:00");
+
+            return (
+              <button
+                key={dateStr}
+                onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                className={cn(
+                  "border-b border-r border-sky-deep/50 min-h-[52px] sm:min-h-[72px] p-1 sm:p-1.5 text-left transition-colors relative",
+                  isSelected
+                    ? "bg-primary/10 ring-1 ring-primary/30"
+                    : isBlocked
+                      ? "bg-red-50/60"
+                      : isPast
+                        ? "bg-slate-50/50"
+                        : "hover:bg-sky/30",
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-xs sm:text-sm font-medium inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full",
+                    isToday
+                      ? "bg-primary text-white"
+                      : isPast
+                        ? "text-slate-muted/50"
+                        : "text-slate-text"
+                  )}
+                >
+                  {day}
+                </span>
+
+                {/* Blocked indicator */}
+                {isBlocked && (
+                  <Lock size={10} className="absolute top-1 right-1 text-red-400" />
+                )}
+
+                {/* Booking dots */}
+                {dayBookings.length > 0 && (
+                  <div className="flex flex-wrap gap-0.5 mt-0.5 sm:mt-1">
+                    {dayBookings.slice(0, 4).map((b) => (
+                      <span
+                        key={b.id}
+                        className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full", statusDot[b.status])}
+                        title={`${b.clientName} - ${b.eventType}`}
+                      />
+                    ))}
+                    {dayBookings.length > 4 && (
+                      <span className="text-[9px] text-slate-muted font-bold">+{dayBookings.length - 4}</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Event count on desktop */}
+                {dayBookings.length > 0 && (
+                  <div className="hidden sm:block mt-0.5">
+                    {dayBookings.slice(0, 2).map((b) => (
+                      <p key={b.id} className="text-[10px] text-slate-muted truncate leading-tight">
+                        {b.clientName.split(" ")[0]}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-4 mt-3 text-[11px] text-slate-muted">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-amber-400" /> Pending
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-green-500" /> Approved
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Lock size={10} className="text-red-400" /> Blocked
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-primary text-white text-[9px] flex items-center justify-center font-bold">
+            {today.getDate()}
+          </span>{" "}
+          Today
+        </span>
+      </div>
+
+      {/* Selected date panel */}
+      {selectedDate && (
+        <div className="mt-4 border border-sky-deep rounded-sm overflow-hidden">
+          <div className="flex items-center justify-between bg-sky/50 px-4 py-3 border-b border-sky-deep">
+            <h4 className="text-slate-text text-sm font-bold">
+              {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </h4>
+            <button onClick={() => setSelectedDate(null)} className="text-slate-muted hover:text-slate-text">
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* Block/Unblock */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              {isSelectedBlocked ? (
+                <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
+                  <div className="flex items-center gap-2 text-red-600 text-sm">
+                    <Lock size={14} />
+                    <span className="font-bold">Date is blocked</span>
+                    {selectedBlockInfo?.reason && (
+                      <span className="text-red-400 text-xs">({selectedBlockInfo.reason})</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => onUnblockDate(selectedDate)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-dark transition-colors border border-sky-deep px-3 py-1.5 rounded-sm"
+                  >
+                    <Unlock size={12} /> Unblock Date
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
+                  <input
+                    type="text"
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value)}
+                    placeholder="Reason (optional)"
+                    className="flex-1 bg-sky/50 border border-sky-deep text-slate-text px-3 py-1.5 text-xs rounded-sm focus:outline-none focus:border-primary/50 w-full sm:w-auto"
+                  />
+                  <button
+                    onClick={() => {
+                      onBlockDate(selectedDate, blockReason || undefined);
+                      setBlockReason("");
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition-colors border border-red-200 px-3 py-1.5 rounded-sm whitespace-nowrap"
+                  >
+                    <Lock size={12} /> Block Date
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Bookings on this date */}
+            {selectedBookings.length === 0 ? (
+              <p className="text-slate-muted text-sm">No bookings on this date.</p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-slate-muted text-xs font-bold uppercase tracking-wide">
+                  {selectedBookings.length} Booking{selectedBookings.length !== 1 ? "s" : ""}
+                </p>
+                {selectedBookings.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => onSelectBooking(b)}
+                    className="w-full text-left border border-sky-deep rounded-sm p-3 hover:bg-sky/30 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-text text-sm font-bold truncate">
+                        {b.clientName}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase border",
+                          b.status === "pending"
+                            ? "bg-amber-100 text-amber-800 border-amber-200"
+                            : b.status === "approved"
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                        )}
+                      >
+                        {b.status}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-muted">
+                      <span className="flex items-center gap-1">
+                        <Clock size={11} /> {b.eventTime}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Users size={11} /> {b.guestCount} guests
+                      </span>
+                      <span>{b.eventType}</span>
+                    </div>
+                    {b.status === "approved" && b.estimatedTotal && (
+                      <div className="flex items-center gap-1 mt-1 text-xs text-green-600">
+                        <CheckCircle2 size={11} /> ${b.estimatedTotal.toFixed(2)}
+                        {b.invoiceUrl && (
+                          <span className="text-primary ml-1">View Invoice</span>
+                        )}
+                      </div>
+                    )}
+                    {b.status === "pending" && (
+                      <div className="flex items-center gap-1 mt-1 text-xs text-amber-600">
+                        <AlertCircle size={11} /> Awaiting review
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
