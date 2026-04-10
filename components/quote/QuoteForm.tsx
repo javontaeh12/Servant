@@ -173,6 +173,7 @@ export default function QuoteForm() {
       const data = await res.json();
       if (data.success) {
         setSuccess(true);
+        window.scrollTo({ top: 0, behavior: "instant" });
       } else {
         setError(data.error || "Something went wrong. Please try again.");
       }
@@ -274,6 +275,21 @@ export default function QuoteForm() {
       return `${items.length} custom items selected`;
     }
     return null;
+  };
+
+  // Generate end time options: every hour from (startTime + 1hr) up to midnight
+  const getEndTimeOptions = (): string[] => {
+    if (!form.eventTime) return [];
+    const [timePart, ampm] = form.eventTime.split(" ");
+    const [h] = timePart.split(":").map(Number);
+    const startHour = ampm === "PM" && h !== 12 ? h + 12 : ampm === "AM" && h === 12 ? 0 : h;
+    const options: string[] = [];
+    for (let hr = startHour + 1; hr <= 23; hr++) {
+      const h12 = hr > 12 ? hr - 12 : hr === 0 ? 12 : hr;
+      const suffix = hr >= 12 ? "PM" : "AM";
+      options.push(`${h12}:00 ${suffix}`);
+    }
+    return options;
   };
 
   if (success) {
@@ -722,73 +738,53 @@ export default function QuoteForm() {
                   </label>
                   {slotsLoading ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2
-                        className="animate-spin text-primary"
-                        size={24}
-                      />
-                      <span className="ml-2 text-slate-muted text-sm">
-                        Loading available times...
-                      </span>
+                      <Loader2 className="animate-spin text-primary" size={24} />
+                      <span className="ml-2 text-slate-muted text-sm">Loading available times...</span>
                     </div>
                   ) : availableSlots.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableSlots.map((slot) => (
-                        <button
-                          key={slot.start}
-                          type="button"
-                          onClick={() => {
-                            setForm((prev) => ({
-                              ...prev,
-                              eventTime: slot.start,
-                              eventEndTime: "",
-                            }));
-                          }}
-                          className={cn(
-                            "p-3 border rounded-sm text-sm font-medium transition-all text-center",
-                            form.eventTime === slot.start
-                              ? "border-primary bg-primary/5 text-primary font-bold"
-                              : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
-                          )}
-                        >
-                          {slot.label}
-                        </button>
-                      ))}
+                    <div className="relative">
+                      <select
+                        value={form.eventTime}
+                        onChange={(e) =>
+                          setForm((prev) => ({ ...prev, eventTime: e.target.value, eventEndTime: "" }))
+                        }
+                        className={cn(selectClass, !form.eventTime && "text-slate-muted/40")}
+                      >
+                        <option value="">Select a start time</option>
+                        {availableSlots.map((slot) => (
+                          <option key={slot.start} value={slot.start}>
+                            {slot.start}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-muted" />
                     </div>
                   ) : (
                     <p className="text-slate-muted text-sm text-center py-6">
-                      No available times for this date. Please select a
-                      different date.
+                      No available times for this date. Please select a different date.
                     </p>
                   )}
                 </div>
 
                 {/* End Time */}
-                {form.eventTime && availableSlots.length > 0 && (
+                {form.eventTime && (
                   <div>
                     <label className={labelClass}>
                       <Clock size={12} className="inline mr-1.5 -mt-0.5" />
                       End Time *
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableSlots
-                        .filter((slot) => slot.start > form.eventTime)
-                        .map((slot) => (
-                          <button
-                            key={`end-${slot.start}`}
-                            type="button"
-                            onClick={() =>
-                              update("eventEndTime", slot.start)
-                            }
-                            className={cn(
-                              "p-3 border rounded-sm text-sm font-medium transition-all text-center",
-                              form.eventEndTime === slot.start
-                                ? "border-primary bg-primary/5 text-primary font-bold"
-                                : "border-sky-deep bg-sky/50 hover:border-primary/30 text-slate-text"
-                            )}
-                          >
-                            {slot.label}
-                          </button>
+                    <div className="relative">
+                      <select
+                        value={form.eventEndTime}
+                        onChange={(e) => update("eventEndTime", e.target.value)}
+                        className={cn(selectClass, !form.eventEndTime && "text-slate-muted/40")}
+                      >
+                        <option value="">Select an end time</option>
+                        {getEndTimeOptions().map((t) => (
+                          <option key={t} value={t}>{t}</option>
                         ))}
+                      </select>
+                      <ChevronDown size={14} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-muted" />
                     </div>
                   </div>
                 )}
