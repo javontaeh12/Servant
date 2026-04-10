@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const FROM_EMAIL = process.env.ADMIN_EMAIL || "imaservantfirst07@gmail.com";
+const FROM_EMAIL = "noreply@iasfcatering.com";
 const FROM_NAME = "I'm A Servant First Catering";
 const BUSINESS_NAME = "I'm A Servant First Catering";
 

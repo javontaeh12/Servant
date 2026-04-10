@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Loader2,
@@ -45,7 +45,22 @@ function AdminContent() {
     name: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [pendingBookings, setPendingBookings] = useState<{
+    id: string; clientName: string; eventDate: string; eventType: string; eventTime: string;
+  }[]>([]);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [notifOpen]);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -61,8 +76,8 @@ function AdminContent() {
   useEffect(() => {
     fetch("/api/bookings")
       .then((res) => (res.ok ? res.json() : []))
-      .then((data: { status: string }[]) => {
-        setPendingCount(data.filter((b) => b.status === "pending").length);
+      .then((data: { id: string; status: string; clientName: string; eventDate: string; eventType: string; eventTime: string }[]) => {
+        setPendingBookings(data.filter((b) => b.status === "pending"));
       })
       .catch(() => {});
   }, []);
@@ -97,18 +112,76 @@ function AdminContent() {
           </div>
           <div className="flex items-center gap-2">
             {/* Notification bell */}
-            <button
-              onClick={() => setActiveTab("bookings")}
-              className="relative flex items-center gap-1.5 text-xs font-bold text-slate-muted hover:text-primary transition-colors px-3 py-2 border border-sky-deep rounded-sm"
-              title={pendingCount > 0 ? `${pendingCount} pending booking${pendingCount !== 1 ? "s" : ""}` : "No pending bookings"}
-            >
-              <Bell size={14} />
-              {pendingCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                  {pendingCount > 9 ? "9+" : pendingCount}
-                </span>
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen((o) => !o)}
+                className="relative flex items-center gap-1.5 text-xs font-bold text-slate-muted hover:text-primary transition-colors px-3 py-2 border border-sky-deep rounded-sm"
+                title={pendingBookings.length > 0 ? `${pendingBookings.length} pending booking${pendingBookings.length !== 1 ? "s" : ""}` : "No pending bookings"}
+              >
+                <Bell size={14} />
+                {pendingBookings.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                    {pendingBookings.length > 9 ? "9+" : pendingBookings.length}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute z-30 top-full right-0 mt-1 w-72 bg-white border border-sky-deep rounded-sm shadow-xl overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-sky-deep bg-slate-50 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-text">Pending Bookings</span>
+                    {pendingBookings.length > 0 && (
+                      <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                        {pendingBookings.length}
+                      </span>
+                    )}
+                  </div>
+                  {pendingBookings.length === 0 ? (
+                    <div className="px-4 py-5 text-center text-xs text-slate-muted">
+                      No pending bookings
+                    </div>
+                  ) : (
+                    <>
+                      <div className="max-h-64 overflow-y-auto divide-y divide-sky-deep">
+                        {pendingBookings.map((b) => {
+                          const date = b.eventDate
+                            ? new Date(b.eventDate + "T00:00:00").toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                            : b.eventDate;
+                          return (
+                            <button
+                              key={b.id}
+                              onClick={() => {
+                                setActiveTab("bookings");
+                                setNotifOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-sky-deep/30 transition-colors"
+                            >
+                              <p className="text-xs font-bold text-slate-text leading-tight">{b.clientName}</p>
+                              <p className="text-[11px] text-slate-muted mt-0.5">{b.eventType} · {date}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="border-t border-sky-deep px-4 py-2.5">
+                        <button
+                          onClick={() => {
+                            setActiveTab("bookings");
+                            setNotifOpen(false);
+                          }}
+                          className="w-full text-xs font-bold text-primary hover:underline text-center"
+                        >
+                          View all bookings
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
-            </button>
+            </div>
             <Link
               href="/"
               className="flex items-center gap-1.5 text-xs font-bold text-slate-muted hover:text-primary transition-colors px-3 py-2 border border-sky-deep rounded-sm"
