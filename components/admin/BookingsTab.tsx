@@ -95,6 +95,7 @@ export default function BookingsTab({ jumpTo }: BookingsTabProps = {}) {
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [jumpTarget, setJumpTarget] = useState<{ date: string; bookingId: string; ts: number } | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (jumpTo) {
@@ -897,16 +898,33 @@ export default function BookingsTab({ jumpTo }: BookingsTabProps = {}) {
                         </button>
                       </>
                     )}
-                    <button
-                      onClick={() => {
-                        if (confirm("Permanently delete this booking?")) handleDelete(booking.id);
-                      }}
-                      disabled={isActioning}
-                      className="sm:ml-auto flex items-center justify-center gap-1 px-3 py-2.5 border border-red-200 text-red-500 rounded-sm text-xs font-bold hover:bg-red-50 disabled:opacity-50 transition-colors"
-                    >
-                      <X size={14} />
-                      Delete
-                    </button>
+                    {confirmDeleteId === booking.id ? (
+                      <div className="sm:ml-auto flex items-center gap-1.5">
+                        <span className="text-xs text-red-600 font-bold">Sure?</span>
+                        <button
+                          onClick={() => { setConfirmDeleteId(null); handleDelete(booking.id); }}
+                          disabled={isActioning}
+                          className="px-3 py-2 bg-red-600 text-white rounded-sm text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-3 py-2 border border-sky-deep text-slate-muted rounded-sm text-xs font-bold hover:bg-gray-50 transition-colors"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(booking.id)}
+                        disabled={isActioning}
+                        className="sm:ml-auto flex items-center justify-center gap-1 px-3 py-2.5 border border-red-200 text-red-500 rounded-sm text-xs font-bold hover:bg-red-50 disabled:opacity-50 transition-colors"
+                      >
+                        <X size={14} />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               );

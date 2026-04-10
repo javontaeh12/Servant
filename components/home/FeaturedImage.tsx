@@ -12,7 +12,7 @@ export default function FeaturedImage() {
   const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
-    fetch("/api/site-settings")
+    fetch("/api/site-settings", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => setSettings(data))
       .catch(() => {});
