@@ -49,6 +49,7 @@ function AdminContent() {
   const [pendingBookings, setPendingBookings] = useState<{
     id: string; clientName: string; eventDate: string; eventType: string; eventTime: string;
   }[]>([]);
+  const [pendingJump, setPendingJump] = useState<{ date: string; bookingId: string; ts: number } | null>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -156,6 +157,7 @@ function AdminContent() {
                               key={b.id}
                               onClick={() => {
                                 setActiveTab("bookings");
+                                setPendingJump({ date: b.eventDate, bookingId: b.id, ts: Date.now() });
                                 setNotifOpen(false);
                               }}
                               className="w-full text-left px-4 py-3 hover:bg-sky-deep/30 transition-colors"
@@ -255,7 +257,7 @@ function AdminContent() {
         </div>
 
         {/* Tab content */}
-        {activeTab === "bookings" && <BookingsTab />}
+        {activeTab === "bookings" && <BookingsTab jumpTo={pendingJump} />}
         {activeTab === "business" && <BusinessTab />}
         {activeTab === "specialties" && <SpecialtiesTab />}
         {activeTab === "gallery" && <GalleryTab />}

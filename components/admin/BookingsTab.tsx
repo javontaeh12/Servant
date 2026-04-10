@@ -80,7 +80,11 @@ const statusBadgeStyles: Record<BookingStatus, string> = {
   rejected: "bg-red-100 text-red-800 border-red-200",
 };
 
-export default function BookingsTab() {
+interface BookingsTabProps {
+  jumpTo?: { date: string; bookingId: string; ts: number } | null;
+}
+
+export default function BookingsTab({ jumpTo }: BookingsTabProps = {}) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +95,13 @@ export default function BookingsTab() {
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [jumpTarget, setJumpTarget] = useState<{ date: string; bookingId: string; ts: number } | null>(null);
+
+  useEffect(() => {
+    if (jumpTo) {
+      setViewMode("calendar");
+      setJumpTarget(jumpTo);
+    }
+  }, [jumpTo]);
 
   // Add Booking form state
   const [showForm, setShowForm] = useState(false);
