@@ -333,7 +333,7 @@ export default function BookingsTab({ jumpTo }: BookingsTabProps = {}) {
     try {
       const res = await fetch(`/api/bookings/${bookingId}/delete`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to delete");
-      await fetchBookings();
+      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to delete booking");
       setTimeout(() => setSubmitError(null), 4000);
