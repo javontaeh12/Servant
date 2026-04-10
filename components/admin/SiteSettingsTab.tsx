@@ -215,10 +215,21 @@ export default function SiteSettingsTab() {
             )}
           </div>
 
+          {/* Hidden file input — always in DOM, triggered via label */}
+          <input
+            id="featuredImageInput"
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleUpload}
+            className="sr-only"
+            disabled={uploading}
+          />
+
           {/* Image preview */}
           {settings?.featuredImage ? (
             <div className="relative">
-              <div className="relative max-h-80 overflow-hidden rounded-sm border border-sky-deep">
+              <div className="relative h-56 sm:h-72 overflow-hidden rounded-sm border border-sky-deep">
                 <Image
                   src={settings.featuredImage}
                   alt="Featured image"
@@ -235,18 +246,17 @@ export default function SiteSettingsTab() {
                 )}
               </div>
               <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                  className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-dark transition-colors px-3 py-2 border border-sky-deep rounded-sm"
+                <label
+                  htmlFor="featuredImageInput"
+                  className={`flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-dark transition-colors px-3 py-2 border border-sky-deep rounded-sm ${uploading ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}
                 >
-                  <Upload size={14} />
-                  Replace
-                </button>
+                  {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  {uploading ? "Uploading..." : "Replace"}
+                </label>
                 <button
                   onClick={handleDeleteImage}
-                  disabled={saving}
-                  className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition-colors px-3 py-2 border border-red-200 rounded-sm"
+                  disabled={saving || uploading}
+                  className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition-colors px-3 py-2 border border-red-200 rounded-sm disabled:opacity-50"
                 >
                   <Trash2 size={14} />
                   Remove
@@ -254,10 +264,9 @@ export default function SiteSettingsTab() {
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="flex flex-col items-center justify-center gap-3 py-12 border-2 border-dashed border-sky-deep rounded-sm hover:border-primary/40 transition-colors cursor-pointer"
+            <label
+              htmlFor="featuredImageInput"
+              className={`flex flex-col items-center justify-center gap-3 py-12 border-2 border-dashed border-sky-deep rounded-sm hover:border-primary/40 transition-colors ${uploading ? "cursor-default opacity-60" : "cursor-pointer"}`}
             >
               {uploading ? (
                 <Loader2 size={24} className="animate-spin text-primary" />
@@ -268,16 +277,8 @@ export default function SiteSettingsTab() {
                 {uploading ? "Uploading..." : "Click to upload a featured image"}
               </span>
               <span className="text-xs text-slate-muted/60">JPEG, PNG, or WebP (max 5MB)</span>
-            </button>
+            </label>
           )}
-
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleUpload}
-            className="hidden"
-          />
         </div>
       </div>
 
