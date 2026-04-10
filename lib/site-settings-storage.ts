@@ -1,4 +1,4 @@
-import { put, list, del } from "@vercel/blob";
+import { put, list } from "@vercel/blob";
 import staticSettings from "@/data/site-settings.json";
 
 const SETTINGS_PREFIX = "data/site-settings";
@@ -30,17 +30,9 @@ export async function readSiteSettings(): Promise<SiteSettings> {
 }
 
 export async function writeSiteSettings(settings: SiteSettings): Promise<void> {
-  const result = await put(
+  await put(
     `${SETTINGS_PREFIX}.json`,
     JSON.stringify(settings, null, 2),
-    { access: "public", contentType: "application/json" }
+    { access: "public", contentType: "application/json", allowOverwrite: true }
   );
-  try {
-    const { blobs } = await list({ prefix: SETTINGS_PREFIX });
-    const toDelete = blobs
-      .filter((b) => b.url !== result.url)
-      .map((b) => b.url)
-      .filter((url) => url.startsWith("https://"));
-    if (toDelete.length > 0) await del(toDelete);
-  } catch {}
 }
