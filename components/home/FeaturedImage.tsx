@@ -23,13 +23,14 @@ export default function FeaturedImage() {
   return (
     <section className="px-6 sm:px-8 pt-0 pb-12 md:pb-16 bg-white">
       <div className="max-w-6xl mx-auto">
-        <div className="relative aspect-[16/7] overflow-hidden rounded-sm">
+        <div className="overflow-hidden rounded-sm">
           <Image
             src={settings.featuredImage}
             alt="Featured"
-            fill
-            className="object-cover"
+            width={0}
+            height={0}
             sizes="(max-width: 768px) 100vw, 1200px"
+            className="w-full h-auto"
             priority
           />
         </div>
