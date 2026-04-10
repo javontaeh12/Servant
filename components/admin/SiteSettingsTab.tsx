@@ -218,14 +218,13 @@ export default function SiteSettingsTab() {
           {/* Image preview */}
           {settings?.featuredImage ? (
             <div className="relative">
-              <div className="relative overflow-hidden rounded-sm border border-sky-deep">
+              <div className="relative max-h-80 overflow-hidden rounded-sm border border-sky-deep">
                 <Image
                   src={settings.featuredImage}
                   alt="Featured image"
-                  width={0}
-                  height={0}
+                  fill
+                  className="object-contain object-center"
                   sizes="(max-width: 768px) 100vw, 600px"
-                  className="w-full h-auto"
                 />
                 {!settings.featuredImageActive && (
                   <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
