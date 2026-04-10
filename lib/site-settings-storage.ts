@@ -7,6 +7,7 @@ export interface SiteSettings {
   quoteFormMode: "builder" | "simple";
   featuredImage: string;
   featuredImageActive: boolean;
+  showBusinessHours: boolean;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = staticSettings as SiteSettings;

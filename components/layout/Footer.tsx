@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Phone, Mail, MapPin, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { BUSINESS, NAV_LINKS } from "@/lib/constants";
 import { readBusiness } from "@/lib/business-storage";
+import { readSiteSettings } from "@/lib/site-settings-storage";
 
 // TikTok icon
 function TikTokIcon({ size = 14, className = "" }: { size?: number; className?: string }) {
@@ -31,7 +32,7 @@ const SOCIAL_ICONS: Record<string, { icon: React.ElementType; label: string }> =
 };
 
 export default async function Footer() {
-  const business = await readBusiness();
+  const [business, siteSettings] = await Promise.all([readBusiness(), readSiteSettings()]);
 
   const activeSocials = Object.entries(business.socialLinks).filter(
     ([, url]) => url && url.trim() !== ""
@@ -128,10 +129,12 @@ export default async function Footer() {
                 <MapPin size={14} className="text-primary-light flex-shrink-0" />
                 {business.address}
               </div>
-              <div className="text-white/30 text-xs mt-1">
-                <p>{business.hours.weekdays}</p>
-                <p>{business.hours.weekends}</p>
-              </div>
+              {siteSettings.showBusinessHours && (
+                <div className="text-white/30 text-xs mt-1">
+                  <p>{business.hours.weekdays}</p>
+                  <p>{business.hours.weekends}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

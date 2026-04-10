@@ -1,5 +1,6 @@
 {
   "quoteFormMode": "simple",
   "featuredImage": "",
-  "featuredImageActive": false
+  "featuredImageActive": false,
+  "showBusinessHours": true
 }

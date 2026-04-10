@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import ContactForm from "@/components/contact/ContactForm";
 import { readBusiness } from "@/lib/business-storage";
+import { readSiteSettings } from "@/lib/site-settings-storage";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -39,7 +40,7 @@ const SOCIAL_ICONS: Record<string, { icon: React.ElementType; label: string }> =
 export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
-  const business = await readBusiness();
+  const [business, siteSettings] = await Promise.all([readBusiness(), readSiteSettings()]);
 
   const activeSocials = Object.entries(business.socialLinks).filter(
     ([, url]) => url && url.trim() !== ""
@@ -137,26 +138,28 @@ export default async function ContactPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-5">
-                <div className="w-12 h-12 border border-sky-deep bg-sky flex items-center justify-center rounded-sm">
-                  <Clock
-                    className="text-primary"
-                    size={18}
-                    strokeWidth={1.5}
-                  />
+              {siteSettings.showBusinessHours && (
+                <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 border border-sky-deep bg-sky flex items-center justify-center rounded-sm">
+                    <Clock
+                      className="text-primary"
+                      size={18}
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-slate-muted text-xs tracking-wide uppercase mb-1">
+                      Hours
+                    </p>
+                    <p className="text-slate-text font-bold text-sm">
+                      {business.hours.weekdays}
+                    </p>
+                    <p className="text-slate-muted text-sm">
+                      {business.hours.weekends}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-muted text-xs tracking-wide uppercase mb-1">
-                    Hours
-                  </p>
-                  <p className="text-slate-text font-bold text-sm">
-                    {business.hours.weekdays}
-                  </p>
-                  <p className="text-slate-muted text-sm">
-                    {business.hours.weekends}
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Social Links */}

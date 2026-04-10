@@ -16,6 +16,7 @@ interface SiteSettings {
   quoteFormMode: "builder" | "simple";
   featuredImage: string;
   featuredImageActive: boolean;
+  showBusinessHours: boolean;
 }
 
 export default function SiteSettingsTab() {
@@ -51,6 +52,28 @@ export default function SiteSettingsTab() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quoteFormMode: newMode }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      const updated = await res.json();
+      setSettings(updated);
+      showSaved();
+    } catch {
+      setError("Failed to save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleBusinessHours = async () => {
+    if (!settings || saving) return;
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ showBusinessHours: !settings.showBusinessHours }),
       });
       if (!res.ok) throw new Error("Save failed");
       const updated = await res.json();
@@ -255,6 +278,47 @@ export default function SiteSettingsTab() {
             onChange={handleUpload}
             className="hidden"
           />
+        </div>
+      </div>
+
+      {/* Business Hours Toggle */}
+      <div className="border border-sky-deep rounded-sm p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-heading text-base font-bold text-slate-text mb-1">
+              Business Hours
+            </h3>
+            <p className="text-slate-muted text-sm">
+              Show or hide your business hours in the footer and contact page.
+            </p>
+          </div>
+          <button
+            onClick={toggleBusinessHours}
+            disabled={saving}
+            className="flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 px-4 py-2.5 sm:py-2 text-sm font-bold border border-sky-deep hover:border-primary hover:text-primary transition-colors rounded-sm disabled:opacity-50"
+          >
+            {saving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : settings?.showBusinessHours ? (
+              <>
+                <ToggleRight size={18} className="text-green-600" />
+                Visible
+              </>
+            ) : (
+              <>
+                <ToggleLeft size={18} className="text-slate-muted" />
+                Hidden
+              </>
+            )}
+          </button>
+        </div>
+        <div className="mt-4 pt-4 border-t border-sky-deep">
+          <p className="text-xs text-slate-muted">
+            <span className="font-bold">Currently:</span>{" "}
+            <span className={`font-medium ${settings?.showBusinessHours ? "text-green-600" : "text-slate-muted"}`}>
+              {settings?.showBusinessHours ? "Showing hours on the website" : "Hours hidden from the website"}
+            </span>
+          </p>
         </div>
       </div>
 
