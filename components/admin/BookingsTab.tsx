@@ -90,6 +90,7 @@ export default function BookingsTab() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
+  const [jumpTarget, setJumpTarget] = useState<{ date: string; bookingId: string; ts: number } | null>(null);
 
   // Add Booking form state
   const [showForm, setShowForm] = useState(false);
@@ -315,6 +316,20 @@ export default function BookingsTab() {
     }
   }
 
+  async function handleDelete(bookingId: string) {
+    setActionLoading(bookingId);
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}/delete`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to delete");
+      await fetchBookings();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to delete booking");
+      setTimeout(() => setSubmitError(null), 4000);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function handleReject(bookingId: string) {
     if (!confirm("Are you sure you want to reject this booking?")) return;
 
@@ -443,10 +458,14 @@ export default function BookingsTab() {
               const dayLabel = d.getDate();
               const isToday = b.eventDate === today;
               return (
-                <div
+                <button
                   key={b.id}
+                  onClick={() => {
+                    setViewMode("calendar");
+                    setJumpTarget({ date: b.eventDate, bookingId: b.id, ts: Date.now() });
+                  }}
                   className={cn(
-                    "flex-shrink-0 border rounded-sm p-3 min-w-[130px] max-w-[160px]",
+                    "flex-shrink-0 border rounded-sm p-3 min-w-[130px] max-w-[160px] text-left transition-opacity hover:opacity-80",
                     b.status === "approved"
                       ? "border-green-300 bg-green-50"
                       : "border-amber-300 bg-amber-50"
@@ -467,7 +486,7 @@ export default function BookingsTab() {
                   <p className="text-xs font-bold text-slate-text truncate">{b.clientName.split(" ")[0]}</p>
                   {b.eventType && <p className="text-[10px] text-slate-muted truncate">{b.eventType}</p>}
                   {b.eventTime && <p className="text-[10px] text-slate-muted mt-0.5">{b.eventTime}</p>}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -484,6 +503,8 @@ export default function BookingsTab() {
           onSelectBooking={(b) => {
             if (b.status === "pending") openApprovalModal(b);
           }}
+          onDeleteBooking={(b) => handleDelete(b.id)}
+          jumpTarget={jumpTarget}
         />
       )}
 
@@ -843,31 +864,39 @@ export default function BookingsTab() {
                     );
                   })()}
 
-                  {/* Action buttons for pending bookings */}
-                  {booking.status === "pending" && (
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-sky-deep">
-                      <button
-                        onClick={() => openApprovalModal(booking)}
-                        disabled={isActioning}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2.5 bg-green-600 text-white rounded-sm text-xs font-bold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                      >
-                        {isActioning ? (
-                          <Loader2 className="animate-spin" size={14} />
-                        ) : (
-                          <Check size={14} />
-                        )}
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleReject(booking.id)}
-                        disabled={isActioning}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2.5 bg-red-600 text-white rounded-sm text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
-                      >
-                        <X size={14} />
-                        Reject
-                      </button>
-                    </div>
-                  )}
+                  {/* Action buttons */}
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-sky-deep">
+                    {booking.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => openApprovalModal(booking)}
+                          disabled={isActioning}
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2.5 bg-green-600 text-white rounded-sm text-xs font-bold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                        >
+                          {isActioning ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(booking.id)}
+                          disabled={isActioning}
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-2.5 bg-red-600 text-white rounded-sm text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          <X size={14} />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (confirm("Permanently delete this booking?")) handleDelete(booking.id);
+                      }}
+                      disabled={isActioning}
+                      className="sm:ml-auto flex items-center justify-center gap-1 px-3 py-2.5 border border-red-200 text-red-500 rounded-sm text-xs font-bold hover:bg-red-50 disabled:opacity-50 transition-colors"
+                    >
+                      <X size={14} />
+                      Delete
+                    </button>
+                  </div>
                 </div>
               );
             })}

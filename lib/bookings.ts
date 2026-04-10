@@ -123,6 +123,14 @@ export async function updateBooking(
   return bookings[index];
 }
 
+export async function deleteBooking(id: string): Promise<boolean> {
+  const bookings = await getBookings();
+  const filtered = bookings.filter((b) => b.id !== id);
+  if (filtered.length === bookings.length) return false; // not found
+  await saveBookings(filtered);
+  return true;
+}
+
 // ========== Available Slots ==========
 
 function formatHour(hour: number): string {

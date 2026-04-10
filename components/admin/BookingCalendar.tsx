@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -17,6 +17,7 @@ import {
   Calendar,
   ExternalLink,
   UtensilsCrossed,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Booking, BookingStatus } from "@/lib/types";
@@ -34,6 +35,8 @@ interface BookingCalendarProps {
   onBlockDate: (date: string, reason?: string) => void;
   onUnblockDate: (date: string) => void;
   onSelectBooking: (booking: Booking) => void;
+  onDeleteBooking: (booking: Booking) => void;
+  jumpTarget?: { date: string; bookingId: string; ts: number } | null;
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -90,6 +93,8 @@ export default function BookingCalendar({
   onBlockDate,
   onUnblockDate,
   onSelectBooking,
+  onDeleteBooking,
+  jumpTarget,
 }: BookingCalendarProps) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -97,8 +102,20 @@ export default function BookingCalendar({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const todayStr = formatDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+
+  // Jump to a specific booking when triggered from the upcoming strip
+  useEffect(() => {
+    if (!jumpTarget) return;
+    const d = new Date(jumpTarget.date + "T00:00:00");
+    setViewYear(d.getFullYear());
+    setViewMonth(d.getMonth());
+    setSelectedDate(jumpTarget.date);
+    const target = bookings.find((b) => b.id === jumpTarget.bookingId) ?? null;
+    setDetailBooking(target);
+  }, [jumpTarget?.ts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const blockedSet = useMemo(
     () => new Set(blockedDates.map((b) => b.date)),
@@ -343,7 +360,7 @@ export default function BookingCalendar({
       {detailBooking && (
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
-          onClick={() => setDetailBooking(null)}
+          onClick={() => { setDetailBooking(null); setConfirmDelete(false); }}
         >
           <div
             className="bg-white rounded-t-lg sm:rounded-sm shadow-xl w-full sm:max-w-md sm:mx-4 border border-sky-deep max-h-[90vh] overflow-y-auto"
@@ -362,7 +379,7 @@ export default function BookingCalendar({
                 </span>
                 <h3 className="text-slate-text font-bold text-sm">{detailBooking.clientName}</h3>
               </div>
-              <button onClick={() => setDetailBooking(null)} className="text-slate-muted hover:text-slate-text p-1">
+              <button onClick={() => { setDetailBooking(null); setConfirmDelete(false); }} className="text-slate-muted hover:text-slate-text p-1">
                 <X size={18} />
               </button>
             </div>
@@ -474,13 +491,43 @@ export default function BookingCalendar({
               {detailBooking.status === "pending" && (
                 <div className="border-t border-sky-deep pt-4 flex gap-2">
                   <button
-                    onClick={() => { setDetailBooking(null); onSelectBooking(detailBooking); }}
+                    onClick={() => { setDetailBooking(null); setConfirmDelete(false); onSelectBooking(detailBooking); }}
                     className="flex-1 flex items-center justify-center gap-1 px-4 py-2.5 bg-green-600 text-white rounded-sm text-xs font-bold hover:bg-green-700 transition-colors"
                   >
                     <CheckCircle2 size={14} /> Approve
                   </button>
                 </div>
               )}
+
+              {/* Delete */}
+              <div className="border-t border-sky-deep pt-4">
+                {!confirmDelete ? (
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <AlertCircle size={13} /> Delete Booking
+                  </button>
+                ) : (
+                  <div className="border border-red-200 bg-red-50 rounded-sm p-3 space-y-2">
+                    <p className="text-xs font-bold text-red-700">Permanently delete this booking?</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { onDeleteBooking(detailBooking); setDetailBooking(null); setConfirmDelete(false); }}
+                        className="flex-1 px-3 py-2 bg-red-600 text-white text-xs font-bold rounded-sm hover:bg-red-700 transition-colors"
+                      >
+                        Yes, Delete
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        className="flex-1 px-3 py-2 border border-red-200 text-red-600 text-xs font-bold rounded-sm hover:bg-red-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
