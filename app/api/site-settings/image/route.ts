@@ -29,10 +29,12 @@ export async function POST(request: NextRequest) {
 
     // Delete old featured image if exists
     const settings = await readSiteSettings();
-    if (settings.featuredImage && settings.featuredImage.startsWith("https://")) {
+    if (settings.featuredImage && settings.featuredImage.includes(".public.blob.vercel-storage.com/")) {
       try {
         await del(settings.featuredImage);
-      } catch {}
+      } catch (e) {
+        console.warn("Could not delete old blob, continuing:", e);
+      }
     }
 
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
@@ -54,24 +56,29 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  try {
-    const session = await getSessionFromRequest(request);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const settings = await readSiteSettings();
-    if (settings.featuredImage && settings.featuredImage.startsWith("https://")) {
-      try {
-        await del(settings.featuredImage);
-      } catch {}
-    }
-
-    await writeSiteSettings({ ...settings, featuredImage: "", featuredImageActive: false });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting featured image:", error);
-    return NextResponse.json({ error: "Failed to delete image" }, { status: 500 });
+  const session = await getSessionFromRequest(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const settings = await readSiteSettings();
+
+  // Try to delete blob, but don't fail if it errors
+  if (settings.featuredImage && settings.featuredImage.includes(".public.blob.vercel-storage.com/")) {
+    try {
+      await del(settings.featuredImage);
+    } catch (e) {
+      console.warn("Could not delete blob, continuing:", e);
+    }
+  }
+
+  // Always clear settings regardless of blob deletion
+  try {
+    await writeSiteSettings({ ...settings, featuredImage: "", featuredImageActive: false });
+  } catch (error) {
+    console.error("Error saving settings:", error);
+    return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }
