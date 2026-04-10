@@ -12,6 +12,7 @@ import {
   Sparkles,
   ToggleLeft,
   ChevronDown,
+  Bell,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ function AdminContent() {
     name: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -54,6 +56,15 @@ function AdminContent() {
         }
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/bookings")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: { status: string }[]) => {
+        setPendingCount(data.filter((b) => b.status === "pending").length);
+      })
+      .catch(() => {});
   }, []);
 
   const handleSignOut = async () => {
@@ -85,6 +96,19 @@ function AdminContent() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Notification bell */}
+            <button
+              onClick={() => setActiveTab("bookings")}
+              className="relative flex items-center gap-1.5 text-xs font-bold text-slate-muted hover:text-primary transition-colors px-3 py-2 border border-sky-deep rounded-sm"
+              title={pendingCount > 0 ? `${pendingCount} pending booking${pendingCount !== 1 ? "s" : ""}` : "No pending bookings"}
+            >
+              <Bell size={14} />
+              {pendingCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                  {pendingCount > 9 ? "9+" : pendingCount}
+                </span>
+              )}
+            </button>
             <Link
               href="/"
               className="flex items-center gap-1.5 text-xs font-bold text-slate-muted hover:text-primary transition-colors px-3 py-2 border border-sky-deep rounded-sm"

@@ -335,6 +335,11 @@ export default function BookingsTab() {
 
   const today = new Date().toISOString().split("T")[0];
 
+  const upcomingBookings = bookings
+    .filter((b) => b.status !== "rejected" && b.eventDate >= today)
+    .sort((a, b) => a.eventDate.localeCompare(b.eventDate))
+    .slice(0, 5);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -426,6 +431,48 @@ export default function BookingsTab() {
           </button>
         </div>
       </div>
+
+      {/* Upcoming Bookings Strip */}
+      {upcomingBookings.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-bold text-slate-muted uppercase tracking-wide mb-2">Coming Up</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {upcomingBookings.map((b) => {
+              const d = new Date(b.eventDate + "T00:00:00");
+              const monthLabel = d.toLocaleDateString("en-US", { month: "short" });
+              const dayLabel = d.getDate();
+              const isToday = b.eventDate === today;
+              return (
+                <div
+                  key={b.id}
+                  className={cn(
+                    "flex-shrink-0 border rounded-sm p-3 min-w-[130px] max-w-[160px]",
+                    b.status === "approved"
+                      ? "border-green-300 bg-green-50"
+                      : "border-amber-300 bg-amber-50"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-slate-muted uppercase leading-none">{isToday ? "Today" : monthLabel}</p>
+                      {!isToday && <p className="text-lg font-bold text-slate-text leading-tight">{dayLabel}</p>}
+                    </div>
+                    <span className={cn(
+                      "text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase",
+                      b.status === "approved" ? "bg-green-200 text-green-800" : "bg-amber-200 text-amber-800"
+                    )}>
+                      {b.status}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-text truncate">{b.clientName.split(" ")[0]}</p>
+                  {b.eventType && <p className="text-[10px] text-slate-muted truncate">{b.eventType}</p>}
+                  {b.eventTime && <p className="text-[10px] text-slate-muted mt-0.5">{b.eventTime}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Calendar View */}
       {viewMode === "calendar" && (
