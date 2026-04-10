@@ -13,6 +13,7 @@ import {
   ToggleLeft,
   ChevronDown,
   Bell,
+  Inbox,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,11 @@ const BusinessTab = dynamic(() => import("@/components/admin/BusinessTab"));
 const GalleryTab = dynamic(() => import("@/components/admin/GalleryTab"));
 const SpecialtiesTab = dynamic(() => import("@/components/admin/SpecialtiesTab"));
 const SiteSettingsTab = dynamic(() => import("@/components/admin/SiteSettingsTab"));
+const SubmissionsTab = dynamic(() => import("@/components/admin/SubmissionsTab"));
 
 const TABS = [
   { id: "bookings", label: "Bookings", icon: Calendar },
+  { id: "submissions", label: "Submissions", icon: Inbox },
   { id: "business", label: "Business", icon: Building2 },
   { id: "specialties", label: "Specialties", icon: Sparkles },
   { id: "gallery", label: "Gallery", icon: Images },
@@ -50,6 +53,7 @@ function AdminContent() {
     id: string; clientName: string; eventDate: string; eventType: string; eventTime: string;
   }[]>([]);
   const [pendingJump, setPendingJump] = useState<{ date: string; bookingId: string; ts: number } | null>(null);
+  const [unreadSubmissions, setUnreadSubmissions] = useState(0);
   const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,6 +83,15 @@ function AdminContent() {
       .then((res) => (res.ok ? res.json() : []))
       .then((data: { id: string; status: string; clientName: string; eventDate: string; eventType: string; eventTime: string }[]) => {
         setPendingBookings(data.filter((b) => b.status === "pending"));
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/contact/submissions")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: { read: boolean }[]) => {
+        setUnreadSubmissions(data.filter((s) => !s.read).length);
       })
       .catch(() => {});
   }, []);
@@ -239,6 +252,7 @@ function AdminContent() {
                     onClick={() => {
                       setActiveTab(tab.id);
                       setDropdownOpen(false);
+                      if (tab.id === "submissions") setUnreadSubmissions(0);
                     }}
                     className={cn(
                       "w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-colors",
@@ -249,6 +263,11 @@ function AdminContent() {
                   >
                     <Icon size={15} className="flex-shrink-0" />
                     {tab.label}
+                    {tab.id === "submissions" && unreadSubmissions > 0 && (
+                      <span className="ml-auto min-w-[18px] h-[18px] bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                        {unreadSubmissions > 9 ? "9+" : unreadSubmissions}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -258,6 +277,7 @@ function AdminContent() {
 
         {/* Tab content */}
         {activeTab === "bookings" && <BookingsTab jumpTo={pendingJump} />}
+        {activeTab === "submissions" && <SubmissionsTab />}
         {activeTab === "business" && <BusinessTab />}
         {activeTab === "specialties" && <SpecialtiesTab />}
         {activeTab === "gallery" && <GalleryTab />}

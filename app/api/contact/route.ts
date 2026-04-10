@@ -3,6 +3,7 @@ import { sendEmail } from "@/lib/email";
 import { readBusiness } from "@/lib/business-storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/sanitize";
+import { saveSubmission } from "@/lib/contact-storage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,6 +82,11 @@ export async function POST(request: NextRequest) {
         </div>
       </div>
     `;
+
+    // Save submission to blob storage (non-blocking — don't fail the request if this errors)
+    saveSubmission({ name, email, phone: phone || undefined, message }).catch((err) =>
+      console.error("Failed to save contact submission:", err)
+    );
 
     await sendEmail(adminEmail, subject, html);
 
