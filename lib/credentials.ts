@@ -1,6 +1,6 @@
-import { put, get } from "@vercel/blob";
+import { supabase, PRIVATE_BUCKET } from "./supabase";
 
-const CREDENTIALS_JSON_PATH = "data/credentials.json";
+const CREDENTIALS_PATH = "data/credentials.json";
 
 export interface StoredCredentials {
   square?: {
@@ -15,11 +15,11 @@ export interface StoredCredentials {
 
 export async function getCredentials(): Promise<StoredCredentials> {
   try {
-    const result = await get(CREDENTIALS_JSON_PATH, { access: "private" });
-    if (!result) {
-      return {};
-    }
-    const text = await new Response(result.stream).text();
+    const { data, error } = await supabase.storage
+      .from(PRIVATE_BUCKET)
+      .download(CREDENTIALS_PATH);
+    if (error || !data) return {};
+    const text = await data.text();
     return JSON.parse(text) as StoredCredentials;
   } catch {
     return {};
@@ -31,12 +31,11 @@ export async function saveCredentials(
 ): Promise<void> {
   const existing = await getCredentials();
   const merged = { ...existing, ...creds };
-  await put(CREDENTIALS_JSON_PATH, JSON.stringify(merged, null, 2), {
-    access: "private",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
+  await supabase.storage.from(PRIVATE_BUCKET).upload(
+    CREDENTIALS_PATH,
+    JSON.stringify(merged, null, 2),
+    { contentType: "application/json", upsert: true }
+  );
 }
 
 // Check if the Square access token is expired (or will expire within 5 minutes)
@@ -139,10 +138,9 @@ export async function getSquareAccessToken(): Promise<string> {
 export async function removeSquareCredentials(): Promise<void> {
   const existing = await getCredentials();
   delete existing.square;
-  await put(CREDENTIALS_JSON_PATH, JSON.stringify(existing, null, 2), {
-    access: "private",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
+  await supabase.storage.from(PRIVATE_BUCKET).upload(
+    CREDENTIALS_PATH,
+    JSON.stringify(existing, null, 2),
+    { contentType: "application/json", upsert: true }
+  );
 }

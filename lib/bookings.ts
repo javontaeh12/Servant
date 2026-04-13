@@ -1,4 +1,4 @@
-import { put, list } from "@vercel/blob";
+import { supabase, PUBLIC_BUCKET } from "./supabase";
 import { Booking, TimeSlot } from "./types";
 
 const BOOKINGS_PATH = "data/bookings.json";
@@ -11,23 +11,23 @@ const BUSINESS_END_HOUR = 19;
 
 export async function getBookings(): Promise<Booking[]> {
   try {
-    const { blobs } = await list({ prefix: BOOKINGS_PATH });
-    if (blobs.length === 0) return [];
-    const response = await fetch(blobs[0].url, { cache: "no-store" });
-    if (!response.ok) return [];
-    return (await response.json()) as Booking[];
+    const { data, error } = await supabase.storage
+      .from(PUBLIC_BUCKET)
+      .download(BOOKINGS_PATH);
+    if (error || !data) return [];
+    const text = await data.text();
+    return JSON.parse(text) as Booking[];
   } catch {
     return [];
   }
 }
 
 async function saveBookings(bookings: Booking[]): Promise<void> {
-  await put(BOOKINGS_PATH, JSON.stringify(bookings, null, 2), {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
+  await supabase.storage.from(PUBLIC_BUCKET).upload(
+    BOOKINGS_PATH,
+    JSON.stringify(bookings, null, 2),
+    { contentType: "application/json", upsert: true }
+  );
 }
 
 // ========== Blocked Dates ==========
@@ -41,23 +41,23 @@ export interface BlockedDate {
 
 export async function getBlockedDates(): Promise<BlockedDate[]> {
   try {
-    const { blobs } = await list({ prefix: BLOCKED_DATES_PATH });
-    if (blobs.length === 0) return [];
-    const response = await fetch(blobs[0].url, { cache: "no-store" });
-    if (!response.ok) return [];
-    return (await response.json()) as BlockedDate[];
+    const { data, error } = await supabase.storage
+      .from(PUBLIC_BUCKET)
+      .download(BLOCKED_DATES_PATH);
+    if (error || !data) return [];
+    const text = await data.text();
+    return JSON.parse(text) as BlockedDate[];
   } catch {
     return [];
   }
 }
 
 async function saveBlockedDates(dates: BlockedDate[]): Promise<void> {
-  await put(BLOCKED_DATES_PATH, JSON.stringify(dates, null, 2), {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
+  await supabase.storage.from(PUBLIC_BUCKET).upload(
+    BLOCKED_DATES_PATH,
+    JSON.stringify(dates, null, 2),
+    { contentType: "application/json", upsert: true }
+  );
 }
 
 export async function blockDate(date: string, reason?: string, blockedBy?: string): Promise<void> {

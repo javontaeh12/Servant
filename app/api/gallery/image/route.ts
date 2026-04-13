@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put, del } from "@vercel/blob";
+import { supabase, PUBLIC_BUCKET, getPublicUrl } from "@/lib/supabase";
 import { getSessionFromRequest } from "@/lib/session";
+
+function extractStoragePath(url: string): string | null {
+  const marker = `/storage/v1/object/public/${PUBLIC_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
 
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "Image must be under 5MB" },
@@ -33,14 +40,16 @@ export async function POST(request: NextRequest) {
     }
 
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
-    const filename = `gallery/${Date.now()}.${ext}`;
+    const filePath = `gallery/${Date.now()}.${ext}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    const blob = await put(filename, file, {
-      access: "public",
+    const { error } = await supabase.storage.from(PUBLIC_BUCKET).upload(filePath, buffer, {
       contentType: file.type,
     });
 
-    return NextResponse.json({ success: true, path: blob.url });
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, path: getPublicUrl(filePath) });
   } catch (error) {
     console.error("Error uploading gallery image:", error);
     return NextResponse.json(
@@ -64,11 +73,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Invalid image path" }, { status: 400 });
     }
 
-    // Verify the URL is a Vercel Blob URL before deleting
-    try {
-      await del(src);
-    } catch {
-      // Blob may already be deleted
+    const storagePath = extractStoragePath(src);
+    if (storagePath) {
+      await supabase.storage.from(PUBLIC_BUCKET).remove([storagePath]);
     }
 
     return NextResponse.json({ success: true });

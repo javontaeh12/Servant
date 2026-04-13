@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put, del } from "@vercel/blob";
+import { supabase, PUBLIC_BUCKET, getPublicUrl } from "@/lib/supabase";
 import { getSessionFromRequest } from "@/lib/session";
 import { readSiteSettings, writeSiteSettings } from "@/lib/site-settings-storage";
+
+function extractStoragePath(url: string): string | null {
+  const marker = `/storage/v1/object/public/${PUBLIC_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,26 +36,28 @@ export async function POST(request: NextRequest) {
 
     // Delete old featured image if exists
     const settings = await readSiteSettings();
-    if (settings.featuredImage && settings.featuredImage.includes(".public.blob.vercel-storage.com/")) {
-      try {
-        await del(settings.featuredImage);
-      } catch (e) {
-        console.warn("Could not delete old blob, continuing:", e);
+    if (settings.featuredImage) {
+      const oldPath = extractStoragePath(settings.featuredImage);
+      if (oldPath) {
+        await supabase.storage.from(PUBLIC_BUCKET).remove([oldPath]);
       }
     }
 
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
-    const filename = `featured/${Date.now()}.${ext}`;
+    const filePath = `featured/${Date.now()}.${ext}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    const blob = await put(filename, file, {
-      access: "public",
+    const { error } = await supabase.storage.from(PUBLIC_BUCKET).upload(filePath, buffer, {
       contentType: file.type,
+      upsert: true,
     });
 
-    // Save to settings
-    await writeSiteSettings({ ...settings, featuredImage: blob.url, featuredImageActive: true });
+    if (error) throw error;
 
-    return NextResponse.json({ success: true, url: blob.url });
+    const publicUrl = getPublicUrl(filePath);
+    await writeSiteSettings({ ...settings, featuredImage: publicUrl, featuredImageActive: true });
+
+    return NextResponse.json({ success: true, url: publicUrl });
   } catch (error) {
     console.error("Error uploading featured image:", error);
     return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
@@ -63,16 +72,13 @@ export async function DELETE(request: NextRequest) {
 
   const settings = await readSiteSettings();
 
-  // Try to delete blob, but don't fail if it errors
-  if (settings.featuredImage && settings.featuredImage.includes(".public.blob.vercel-storage.com/")) {
-    try {
-      await del(settings.featuredImage);
-    } catch (e) {
-      console.warn("Could not delete blob, continuing:", e);
+  if (settings.featuredImage) {
+    const oldPath = extractStoragePath(settings.featuredImage);
+    if (oldPath) {
+      await supabase.storage.from(PUBLIC_BUCKET).remove([oldPath]);
     }
   }
 
-  // Always clear settings regardless of blob deletion
   try {
     await writeSiteSettings({ ...settings, featuredImage: "", featuredImageActive: false });
   } catch (error) {

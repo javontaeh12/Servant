@@ -1,7 +1,7 @@
-import { put, list } from "@vercel/blob";
+import { supabase, PUBLIC_BUCKET } from "./supabase";
 import staticSettings from "@/data/site-settings.json";
 
-const SETTINGS_PREFIX = "data/site-settings";
+const SETTINGS_PATH = "data/site-settings.json";
 
 export interface SiteSettings {
   quoteFormMode: "builder" | "simple";
@@ -14,25 +14,22 @@ const DEFAULT_SETTINGS: SiteSettings = staticSettings as SiteSettings;
 
 export async function readSiteSettings(): Promise<SiteSettings> {
   try {
-    const { blobs } = await list({ prefix: SETTINGS_PREFIX });
-    if (blobs.length === 0) return DEFAULT_SETTINGS;
-    blobs.sort(
-      (a, b) =>
-        new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-    );
-    const response = await fetch(blobs[0].url, { cache: "no-store" });
-    if (!response.ok) return DEFAULT_SETTINGS;
-    const data = await response.json();
-    return { ...DEFAULT_SETTINGS, ...data } as SiteSettings;
+    const { data, error } = await supabase.storage
+      .from(PUBLIC_BUCKET)
+      .download(SETTINGS_PATH);
+    if (error || !data) return DEFAULT_SETTINGS;
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    return { ...DEFAULT_SETTINGS, ...parsed } as SiteSettings;
   } catch {
     return DEFAULT_SETTINGS;
   }
 }
 
 export async function writeSiteSettings(settings: SiteSettings): Promise<void> {
-  await put(
-    `${SETTINGS_PREFIX}.json`,
+  await supabase.storage.from(PUBLIC_BUCKET).upload(
+    SETTINGS_PATH,
     JSON.stringify(settings, null, 2),
-    { access: "public", contentType: "application/json", allowOverwrite: true }
+    { contentType: "application/json", upsert: true }
   );
 }

@@ -1,7 +1,7 @@
-import { put, list } from "@vercel/blob";
+import { supabase, PUBLIC_BUCKET } from "./supabase";
 
 /**
- * Shared utilities for reading/writing JSON data to Vercel Blob Storage.
+ * Shared utilities for reading/writing JSON data to Supabase Storage.
  *
  * All domain-specific storage modules (menu, pricing, gallery, business,
  * specialty) delegate to these helpers so the try/catch + fetch + fallback
@@ -9,52 +9,37 @@ import { put, list } from "@vercel/blob";
  */
 
 export interface ReadBlobOptions {
-  /** When true the fetch uses `cache: "no-store"` to bypass CDN caching. */
+  /** Kept for API compat — Supabase always fetches fresh via download(). */
   noCache?: boolean;
 }
 
 /**
- * Read a JSON value from Vercel Blob Storage, falling back to a default.
- *
- * 1. Lists blobs matching `prefix`.
- * 2. Fetches the first blob's URL and parses the response as JSON.
- * 3. Returns `fallback` if no blob exists, the fetch fails, or parsing throws.
+ * Read a JSON value from Supabase Storage, falling back to a default.
  */
 export async function readBlob<T>(
-  prefix: string,
+  path: string,
   fallback: T,
-  options?: ReadBlobOptions
+  _options?: ReadBlobOptions
 ): Promise<T> {
   try {
-    const { blobs } = await list({ prefix });
-    if (blobs.length === 0) {
-      return fallback;
-    }
-    const fetchOptions: RequestInit | undefined = options?.noCache
-      ? { cache: "no-store" }
-      : undefined;
-    const response = await fetch(blobs[0].url, fetchOptions);
-    if (!response.ok) {
-      return fallback;
-    }
-    return (await response.json()) as T;
+    const { data, error } = await supabase.storage
+      .from(PUBLIC_BUCKET)
+      .download(path);
+    if (error || !data) return fallback;
+    const text = await data.text();
+    return JSON.parse(text) as T;
   } catch {
     return fallback;
   }
 }
 
 /**
- * Write a JSON value to Vercel Blob Storage (overwrite, no random suffix).
- *
- * This covers the common case used by menu, business, gallery, and specialty
- * storage. Pricing uses a different strategy (random suffix + cleanup) and
- * therefore has its own write implementation.
+ * Write a JSON value to Supabase Storage (upsert).
  */
 export async function writeBlob<T>(path: string, data: T): Promise<void> {
-  await put(path, JSON.stringify(data, null, 2), {
-    access: "public",
+  const body = JSON.stringify(data, null, 2);
+  await supabase.storage.from(PUBLIC_BUCKET).upload(path, body, {
     contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
+    upsert: true,
   });
 }
