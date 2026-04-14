@@ -1,4 +1,4 @@
-import { supabase, PUBLIC_BUCKET } from "./supabase";
+import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
 import { Booking, TimeSlot } from "./types";
 
 const BOOKINGS_PATH = "data/bookings.json";
@@ -11,12 +11,9 @@ const BUSINESS_END_HOUR = 19;
 
 export async function getBookings(): Promise<Booking[]> {
   try {
-    const { data, error } = await supabase.storage
-      .from(PUBLIC_BUCKET)
-      .download(BOOKINGS_PATH);
-    if (error || !data) return [];
-    const text = await data.text();
-    return JSON.parse(text) as Booking[];
+    const response = await fetch(getPublicUrl(BOOKINGS_PATH), { cache: "no-store" });
+    if (!response.ok) return [];
+    return (await response.json()) as Booking[];
   } catch {
     return [];
   }
@@ -41,12 +38,9 @@ export interface BlockedDate {
 
 export async function getBlockedDates(): Promise<BlockedDate[]> {
   try {
-    const { data, error } = await supabase.storage
-      .from(PUBLIC_BUCKET)
-      .download(BLOCKED_DATES_PATH);
-    if (error || !data) return [];
-    const text = await data.text();
-    return JSON.parse(text) as BlockedDate[];
+    const response = await fetch(getPublicUrl(BLOCKED_DATES_PATH), { cache: "no-store" });
+    if (!response.ok) return [];
+    return (await response.json()) as BlockedDate[];
   } catch {
     return [];
   }

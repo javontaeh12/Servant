@@ -1,4 +1,4 @@
-import { supabase, PUBLIC_BUCKET } from "./supabase";
+import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
 import { PricingConfig, PricingEntry } from "./types";
 import staticPricing from "@/data/pricing.json";
 
@@ -23,12 +23,9 @@ function normalizeEntries(
 
 export async function readPricing(): Promise<PricingConfig> {
   try {
-    const { data, error } = await supabase.storage
-      .from(PUBLIC_BUCKET)
-      .download(PRICING_PATH);
-    if (error || !data) return DEFAULT_PRICING;
-    const text = await data.text();
-    const parsed = JSON.parse(text);
+    const response = await fetch(getPublicUrl(PRICING_PATH), { cache: "no-store" });
+    if (!response.ok) return DEFAULT_PRICING;
+    const parsed = await response.json();
     return {
       ...parsed,
       eventTypes: normalizeEntries(parsed.eventTypes ?? {}),

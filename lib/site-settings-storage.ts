@@ -1,4 +1,4 @@
-import { supabase, PUBLIC_BUCKET } from "./supabase";
+import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
 import staticSettings from "@/data/site-settings.json";
 
 const SETTINGS_PATH = "data/site-settings.json";
@@ -14,13 +14,10 @@ const DEFAULT_SETTINGS: SiteSettings = staticSettings as SiteSettings;
 
 export async function readSiteSettings(): Promise<SiteSettings> {
   try {
-    const { data, error } = await supabase.storage
-      .from(PUBLIC_BUCKET)
-      .download(SETTINGS_PATH);
-    if (error || !data) return DEFAULT_SETTINGS;
-    const text = await data.text();
-    const parsed = JSON.parse(text);
-    return { ...DEFAULT_SETTINGS, ...parsed } as SiteSettings;
+    const response = await fetch(getPublicUrl(SETTINGS_PATH), { cache: "no-store" });
+    if (!response.ok) return DEFAULT_SETTINGS;
+    const data = await response.json();
+    return { ...DEFAULT_SETTINGS, ...data } as SiteSettings;
   } catch {
     return DEFAULT_SETTINGS;
   }

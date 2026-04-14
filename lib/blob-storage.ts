@@ -1,4 +1,4 @@
-import { supabase, PUBLIC_BUCKET } from "./supabase";
+import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
 
 /**
  * Shared utilities for reading/writing JSON data to Supabase Storage.
@@ -9,12 +9,12 @@ import { supabase, PUBLIC_BUCKET } from "./supabase";
  */
 
 export interface ReadBlobOptions {
-  /** Kept for API compat — Supabase always fetches fresh via download(). */
   noCache?: boolean;
 }
 
 /**
  * Read a JSON value from Supabase Storage, falling back to a default.
+ * Uses direct fetch on the public URL to avoid SDK bucket name conflicts.
  */
 export async function readBlob<T>(
   path: string,
@@ -22,12 +22,10 @@ export async function readBlob<T>(
   _options?: ReadBlobOptions
 ): Promise<T> {
   try {
-    const { data, error } = await supabase.storage
-      .from(PUBLIC_BUCKET)
-      .download(path);
-    if (error || !data) return fallback;
-    const text = await data.text();
-    return JSON.parse(text) as T;
+    const url = getPublicUrl(path);
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) return fallback;
+    return (await response.json()) as T;
   } catch {
     return fallback;
   }
