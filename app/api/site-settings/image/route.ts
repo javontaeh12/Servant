@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, PUBLIC_BUCKET, getPublicUrl } from "@/lib/supabase";
+import { uploadObject, deleteObject, getPublicUrl, extractStoragePath } from "@/lib/r2";
 import { getSessionFromRequest } from "@/lib/session";
 import { readSiteSettings, writeSiteSettings } from "@/lib/site-settings-storage";
-
-function extractStoragePath(url: string): string | null {
-  const marker = `/storage/v1/object/public/${PUBLIC_BUCKET}/`;
-  const idx = url.indexOf(marker);
-  if (idx === -1) return null;
-  return url.slice(idx + marker.length);
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (settings.featuredImage) {
       const oldPath = extractStoragePath(settings.featuredImage);
       if (oldPath) {
-        await supabase.storage.from(PUBLIC_BUCKET).remove([oldPath]);
+        await deleteObject(oldPath);
       }
     }
 
@@ -47,12 +40,7 @@ export async function POST(request: NextRequest) {
     const filePath = `featured/${Date.now()}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { error } = await supabase.storage.from(PUBLIC_BUCKET).upload(filePath, buffer, {
-      contentType: file.type,
-      upsert: true,
-    });
-
-    if (error) throw error;
+    await uploadObject(filePath, buffer, file.type);
 
     const publicUrl = getPublicUrl(filePath);
     await writeSiteSettings({ ...settings, featuredImage: publicUrl, featuredImageActive: true });
@@ -75,7 +63,7 @@ export async function DELETE(request: NextRequest) {
   if (settings.featuredImage) {
     const oldPath = extractStoragePath(settings.featuredImage);
     if (oldPath) {
-      await supabase.storage.from(PUBLIC_BUCKET).remove([oldPath]);
+      await deleteObject(oldPath);
     }
   }
 

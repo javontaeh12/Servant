@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, PUBLIC_BUCKET, getPublicUrl } from "@/lib/supabase";
+import { uploadObject, deleteObject, getPublicUrl, extractStoragePath } from "@/lib/r2";
 import { getSessionFromRequest } from "@/lib/session";
-
-function extractStoragePath(url: string): string | null {
-  const marker = `/storage/v1/object/public/${PUBLIC_BUCKET}/`;
-  const idx = url.indexOf(marker);
-  if (idx === -1) return null;
-  return url.slice(idx + marker.length);
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,11 +29,7 @@ export async function POST(request: NextRequest) {
     const filePath = `specialties/${Date.now()}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { error } = await supabase.storage.from(PUBLIC_BUCKET).upload(filePath, buffer, {
-      contentType: file.type,
-    });
-
-    if (error) throw error;
+    await uploadObject(filePath, buffer, file.type);
 
     return NextResponse.json({ success: true, url: getPublicUrl(filePath) });
   } catch (error) {
@@ -65,7 +54,7 @@ export async function DELETE(request: NextRequest) {
 
     const storagePath = extractStoragePath(url);
     if (storagePath) {
-      await supabase.storage.from(PUBLIC_BUCKET).remove([storagePath]);
+      await deleteObject(storagePath);
     }
 
     return NextResponse.json({ success: true });

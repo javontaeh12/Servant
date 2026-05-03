@@ -1,4 +1,4 @@
-import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
+import { uploadObject, getPublicUrl } from "./r2";
 import { Booking, TimeSlot } from "./types";
 
 const BOOKINGS_PATH = "data/bookings.json";
@@ -20,10 +20,10 @@ export async function getBookings(): Promise<Booking[]> {
 }
 
 async function saveBookings(bookings: Booking[]): Promise<void> {
-  await supabase.storage.from(PUBLIC_BUCKET).upload(
+  await uploadObject(
     BOOKINGS_PATH,
     JSON.stringify(bookings, null, 2),
-    { contentType: "application/json", upsert: true }
+    "application/json"
   );
 }
 
@@ -47,10 +47,10 @@ export async function getBlockedDates(): Promise<BlockedDate[]> {
 }
 
 async function saveBlockedDates(dates: BlockedDate[]): Promise<void> {
-  await supabase.storage.from(PUBLIC_BUCKET).upload(
+  await uploadObject(
     BLOCKED_DATES_PATH,
     JSON.stringify(dates, null, 2),
-    { contentType: "application/json", upsert: true }
+    "application/json"
   );
 }
 

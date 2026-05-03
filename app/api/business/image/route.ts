@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, PUBLIC_BUCKET, getPublicUrl } from "@/lib/supabase";
+import { uploadObject, deleteObjects, listObjects, getPublicUrl } from "@/lib/r2";
 import { getSessionFromRequest } from "@/lib/session";
 import { readBusiness, writeBusiness } from "@/lib/business-storage";
 
@@ -34,25 +34,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete old about images
-    const { data: oldFiles } = await supabase.storage
-      .from(PUBLIC_BUCKET)
-      .list("uploads", { search: "about-image" });
-    if (oldFiles && oldFiles.length > 0) {
-      await supabase.storage
-        .from(PUBLIC_BUCKET)
-        .remove(oldFiles.map((f) => `uploads/${f.name}`));
+    const oldFiles = await listObjects("uploads", "about-image");
+    if (oldFiles.length > 0) {
+      await deleteObjects(oldFiles.map((f) => `uploads/${f.name}`));
     }
 
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
     const filePath = `uploads/about-image.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { error } = await supabase.storage.from(PUBLIC_BUCKET).upload(filePath, buffer, {
-      contentType: file.type,
-      upsert: true,
-    });
-
-    if (error) throw error;
+    await uploadObject(filePath, buffer, file.type);
 
     const publicUrl = getPublicUrl(filePath);
 

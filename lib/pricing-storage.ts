@@ -1,4 +1,4 @@
-import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
+import { uploadObject, getPublicUrl } from "./r2";
 import { PricingConfig, PricingEntry } from "./types";
 import staticPricing from "@/data/pricing.json";
 
@@ -38,9 +38,9 @@ export async function readPricing(): Promise<PricingConfig> {
 }
 
 export async function writePricing(config: PricingConfig): Promise<void> {
-  await supabase.storage.from(PUBLIC_BUCKET).upload(
+  await uploadObject(
     PRICING_PATH,
     JSON.stringify(config, null, 2),
-    { contentType: "application/json", upsert: true }
+    "application/json"
   );
 }

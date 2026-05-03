@@ -1,7 +1,7 @@
-import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
+import { getPublicUrl, uploadObject } from "./r2";
 
 /**
- * Shared utilities for reading/writing JSON data to Supabase Storage.
+ * Shared utilities for reading/writing JSON data to R2.
  *
  * All domain-specific storage modules (menu, pricing, gallery, business,
  * specialty) delegate to these helpers so the try/catch + fetch + fallback
@@ -13,8 +13,8 @@ export interface ReadBlobOptions {
 }
 
 /**
- * Read a JSON value from Supabase Storage, falling back to a default.
- * Uses direct fetch on the public URL to avoid SDK bucket name conflicts.
+ * Read a JSON value from R2, falling back to a default.
+ * Uses a fetch on the public URL (avoids needing read auth on hot paths).
  */
 export async function readBlob<T>(
   path: string,
@@ -32,12 +32,9 @@ export async function readBlob<T>(
 }
 
 /**
- * Write a JSON value to Supabase Storage (upsert).
+ * Write a JSON value to R2 (upsert).
  */
 export async function writeBlob<T>(path: string, data: T): Promise<void> {
   const body = JSON.stringify(data, null, 2);
-  await supabase.storage.from(PUBLIC_BUCKET).upload(path, body, {
-    contentType: "application/json",
-    upsert: true,
-  });
+  await uploadObject(path, body, "application/json");
 }

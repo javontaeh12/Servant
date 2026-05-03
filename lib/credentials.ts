@@ -1,4 +1,4 @@
-import { supabase, PRIVATE_BUCKET } from "./supabase";
+import { uploadObject, getObjectText, R2_PRIVATE_BUCKET } from "./r2";
 
 const CREDENTIALS_PATH = "data/credentials.json";
 
@@ -15,11 +15,8 @@ export interface StoredCredentials {
 
 export async function getCredentials(): Promise<StoredCredentials> {
   try {
-    const { data, error } = await supabase.storage
-      .from(PRIVATE_BUCKET)
-      .download(CREDENTIALS_PATH);
-    if (error || !data) return {};
-    const text = await data.text();
+    const text = await getObjectText(CREDENTIALS_PATH, R2_PRIVATE_BUCKET);
+    if (!text) return {};
     return JSON.parse(text) as StoredCredentials;
   } catch {
     return {};
@@ -31,10 +28,11 @@ export async function saveCredentials(
 ): Promise<void> {
   const existing = await getCredentials();
   const merged = { ...existing, ...creds };
-  await supabase.storage.from(PRIVATE_BUCKET).upload(
+  await uploadObject(
     CREDENTIALS_PATH,
     JSON.stringify(merged, null, 2),
-    { contentType: "application/json", upsert: true }
+    "application/json",
+    R2_PRIVATE_BUCKET
   );
 }
 
@@ -138,9 +136,10 @@ export async function getSquareAccessToken(): Promise<string> {
 export async function removeSquareCredentials(): Promise<void> {
   const existing = await getCredentials();
   delete existing.square;
-  await supabase.storage.from(PRIVATE_BUCKET).upload(
+  await uploadObject(
     CREDENTIALS_PATH,
     JSON.stringify(existing, null, 2),
-    { contentType: "application/json", upsert: true }
+    "application/json",
+    R2_PRIVATE_BUCKET
   );
 }

@@ -1,4 +1,4 @@
-import { supabase, PUBLIC_BUCKET, getPublicUrl } from "./supabase";
+import { uploadObject, getPublicUrl } from "./r2";
 import staticSettings from "@/data/site-settings.json";
 
 const SETTINGS_PATH = "data/site-settings.json";
@@ -24,9 +24,9 @@ export async function readSiteSettings(): Promise<SiteSettings> {
 }
 
 export async function writeSiteSettings(settings: SiteSettings): Promise<void> {
-  await supabase.storage.from(PUBLIC_BUCKET).upload(
+  await uploadObject(
     SETTINGS_PATH,
     JSON.stringify(settings, null, 2),
-    { contentType: "application/json", upsert: true }
+    "application/json"
   );
 }
