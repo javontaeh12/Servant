@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
-    "@supabase/supabase-js": "^2.103.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.0",
     "googleapis": "^171.4.0",
