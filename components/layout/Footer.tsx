@@ -140,11 +140,19 @@ export default async function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-16 pt-8 border-t border-white/10 text-center">
+        <div className="mt-16 pt-8 border-t border-white/10 text-center flex flex-col items-center gap-2">
           <p className="text-white/30 text-xs tracking-wide">
             &copy; {new Date().getFullYear()} {BUSINESS.name}. All rights
             reserved.
           </p>
+          <a
+            href="https://bizfloo.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-white/30 hover:text-white/60 transition-colors"
+          >
+            Built by <span className="font-semibold">Bizfloo</span>
+          </a>
         </div>
       </div>
     </footer>
