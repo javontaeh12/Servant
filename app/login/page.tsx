@@ -10,11 +10,9 @@ function LoginForm() {
   const error = searchParams.get("error");
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Check if user already has a valid session — if so, redirect to admin
   useEffect(() => {
     fetch("/api/auth/session")
       .then((res) => res.json())
@@ -37,14 +35,14 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
 
       if (res.ok) {
         router.replace("/admin");
       } else {
         const data = await res.json();
-        setLoginError(data.error || "Invalid email or password");
+        setLoginError(data.error || "This email is not authorized.");
       }
     } catch {
       setLoginError("Something went wrong. Please try again.");
@@ -111,24 +109,8 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-slate-200 rounded-sm px-3 py-2.5 text-sm text-slate-text placeholder:text-slate-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              placeholder="admin@example.com"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-slate-text mb-1"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-slate-200 rounded-sm px-3 py-2.5 text-sm text-slate-text placeholder:text-slate-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              placeholder="Enter your password"
+              placeholder="you@example.com"
+              autoComplete="email"
             />
           </div>
           <button
